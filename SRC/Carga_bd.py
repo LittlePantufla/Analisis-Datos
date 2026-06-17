@@ -7,7 +7,9 @@ Integrantes: Joaquín Martí, Joaquín Paredes, Daniel Ruiz
 """
 
 import os
+import math 
 import pandas as pd
+import numpy as np
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pathlib import Path
@@ -36,24 +38,62 @@ TABLAS = [
     ('ventasvendedor', 'Data/normalized/ventasvendedor.csv'),
 ]
 
-
+import pandas as pd
+import numpy as np
+import math 
 def preparar_df(df):
     """
-    Convierte el DataFrame para que Supabase lo acepte:
-    - NaN → None (JSON null)
-    - Números con decimales .0 → enteros donde corresponde
+    Convierte el DataFrame para que Supabase lo acepte.
     """
-    df = df.where(pd.notnull(df), None)
-
-    for col in df.columns:
-        if df[col].dtype == 'float64':
-            # Si todos los valores son enteros (ej: 1.0, 2.0), convertir a int
-            no_nulos = df[col].dropna()
-            if (no_nulos == no_nulos.astype('int64')).all():
-                df[col] = df[col].apply(lambda x: int(x) if x is not None else None)
-
-    return df
-
+    # 1. Obtener valores crudos de numpy y limpiar manualmente
+    cleaned_records = []
+    
+    for idx in range(len(df)):
+        record = {}
+        for col in df.columns:
+            # Obtener valor crudo (evita que pandas lo envuelva)
+            val = df.iloc[idx][col]
+            
+            # Limpieza exhaustiva
+            if val is None:
+                record[col] = None
+            elif isinstance(val, float):
+                if math.isnan(val) or math.isinf(val):
+                    record[col] = None
+                elif val.is_integer():
+                    record[col] = int(val)
+                else:
+                    record[col] = val
+            elif isinstance(val, np.floating):
+                if np.isnan(val) or np.isinf(val):
+                    record[col] = None
+                elif float(val).is_integer():
+                    record[col] = int(val)
+                else:
+                    record[col] = float(val)
+            elif isinstance(val, np.integer):
+                record[col] = int(val)
+            elif isinstance(val, np.bool_):
+                record[col] = bool(val)
+            elif isinstance(val, str) and val.lower() in ['nan', 'none', 'nat', '']:
+                record[col] = None
+            else:
+                record[col] = val
+        
+        cleaned_records.append(record)
+    
+    # 2. Rellenar columnas NOT NULL
+    columnas_not_null = {
+        'observacion': 'Sin observación',
+    }
+    
+    for record in cleaned_records:
+        for col, default in columnas_not_null.items():
+            if col in record and record[col] is None:
+                record[col] = default
+    
+    # 3. Crear DataFrame nuevo desde cero
+    return pd.DataFrame(cleaned_records)
 
 def subir_tabla(tabla, csv_path, batch_size=500):
     """
@@ -79,6 +119,10 @@ def subir_tabla(tabla, csv_path, batch_size=500):
             print(f"  ✅ Batch {n_batch}: {len(batch)} registros")
         except Exception as e:
             print(f"  ❌ Error en batch {n_batch}: {e}")
+            print("Columnas:", df.columns.tolist())
+            print("Tipos:\n", df.dtypes)
+            print("Primer registro:", df.iloc[0].to_dict())
+
 
     return subidos
 
