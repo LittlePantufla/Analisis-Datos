@@ -1,5 +1,7 @@
 """
-Módulo de conexión a la base de datos Supabase (PostgreSQL).
+Módulo de conexión a Supabase (PostgreSQL) vía SQLAlchemy.
+Permite leer tablas y ejecutar consultas personalizadas.
+
 Proyecto: Optimización del Análisis de Datos
 Integrantes: Joaquín Martí, Joaquín Paredes, Daniel Ruiz
 """
@@ -9,96 +11,99 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 
-# Cargar variables de entorno
 load_dotenv()
 
 
 def get_engine():
     """
-    Crea y retorna un engine de SQLAlchemy para conexión a Supabase.
-    
-    Returns:
-        sqlalchemy.engine.Engine: Engine de conexión a PostgreSQL
+    Crea un engine SQLAlchemy para conectarse a Supabase (PostgreSQL).
+    Las credenciales vienen del archivo .env
     """
-    host = os.getenv('SUPABASE_DB_HOST')
-    db = os.getenv('SUPABASE_DB_NAME', 'postgres')
-    user = os.getenv('SUPABASE_DB_USER', 'postgres')
-    password = os.getenv('SUPABASE_DB_PASSWORD')
-    port = os.getenv('SUPABASE_DB_PORT', '5432')
-    
-    if not password:
-        raise ValueError("Falta SUPABASE_DB_PASSWORD en el archivo .env")
-    
+    host     = os.getenv('SUPABASE_DB_HOST')
+    db       = os.getenv('SUPABASE_DB_NAME', 'postgres')
+    user     = os.getenv('SUPABASE_DB_USER', 'postgres')
+    password = os.getenv('Hipopotamo09.')
+    port     = os.getenv('SUPABASE_DB_PORT', '5432')
+
+    if not host or not password:
+        raise ValueError("Faltan SUPABASE_DB_HOST o SUPABASE_DB_PASSWORD en el .env")
+
     url = f"postgresql://{user}:{password}@{host}:{port}/{db}"
     return create_engine(url)
 
 
 def load_table(table_name):
-    """
-    Carga una tabla completa desde Supabase a un DataFrame de Pandas.
-    
-    Args:
-        table_name (str): Nombre de la tabla
-        
-    Returns:
-        pd.DataFrame: Datos de la tabla
-    """
+    """Carga una tabla completa como DataFrame."""
     engine = get_engine()
-    query = f"SELECT * FROM {table_name}"
+    # Comillas dobles para respetar el nombre exacto en PostgreSQL
+    query = f'SELECT * FROM "{table_name}"'
     return pd.read_sql(query, engine)
 
 
 def load_query(sql_query):
-    """
-    Ejecuta una consulta SQL personalizada y retorna los resultados.
-    
-    Args:
-        sql_query (str): Consulta SQL
-        
-    Returns:
-        pd.DataFrame: Resultados de la consulta
-    """
+    """Ejecuta una consulta SQL personalizada y retorna los resultados."""
     engine = get_engine()
     return pd.read_sql(text(sql_query), engine)
 
 
 def load_all_tables():
     """
-    Carga todas las tablas principales del proyecto.
-    
-    Returns:
-        dict: Diccionario con DataFrames de cada tabla
+    Carga todas las tablas del proyecto.
+    Retorna un diccionario {nombre: DataFrame}.
     """
-    tables = {
-        'clientes': load_table('CLIENTES'),
-        'productos': load_table('PRODUCTOS'),
-        'proveedores': load_table('PROVEEDORES'),
-        'tipo_producto': load_table('TIPOPRODUCTO'),
-        'region': load_table('REGION'),
-        'ciudad': load_table('CIUDAD'),
-        'sucursales': load_table('SUCURSALES'),
-        'vendedor': load_table('VENDEDOR'),
-        'ventas_diarias': load_table('VENTASDIARIAS'),
-        'ventas_vendedor': load_table('VENTASVENDEDOR'),
-    }
-    return tables
+    # Nombres en minúsculas — así quedaron creadas en Supabase
+    nombres = [
+        'region',
+        'tipoproducto',
+        'proveedores',
+        'vendedor',
+        'ciudad',
+        'sucursales',
+        'productos',
+        'clientes',
+        'ventasdiarias',
+        'ventasvendedor',
+    ]
+
+    tablas = {}
+    for nombre in nombres:
+        try:
+            tablas[nombre] = load_table(nombre)
+            print(f"  ✅ {nombre:<20} {len(tablas[nombre]):>6} registros")
+        except Exception as e:
+            print(f"  ❌ {nombre:<20} Error: {e}")
+            tablas[nombre] = None
+
+    return tablas
 
 
 def load_ventas_completa():
     """
-    Carga la vista de ventas completa con todos los joins.
-    
-    Returns:
-        pd.DataFrame: Vista analítica completa
+    Carga la vista analítica completa de ventas con todos los joins.
+    Requiere que la vista 'vw_ventas_completa' exista en Supabase.
     """
     return load_table('vw_ventas_completa')
 
 
 if __name__ == "__main__":
-    print("Probando conexión a Supabase...")
+    print("=" * 55)
+    print("  PROBANDO CONEXIÓN A SUPABASE")
+    print("=" * 55 + "\n")
+
     try:
-        df = load_table('CLIENTES')
-        print(f"✅ Conexión exitosa. Clientes cargados: {len(df)}")
-        print(df.head(3))
+        tablas = load_all_tables()
+        print("\n✅ Conexión exitosa.\n")
+
+        # Mostrar muestra de clientes
+        if tablas.get('clientes') is not None:
+            print("Muestra de CLIENTES:")
+            print(tablas['clientes'].head(3).to_string(index=False))
+
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"\n❌ Error de conexión: {e}")
+        print("\nVerifica tu archivo .env:")
+        print("  SUPABASE_DB_HOST=db.xxxx.supabase.co")
+        print("  SUPABASE_DB_PASSWORD=tu_password")
+        print("  SUPABASE_DB_NAME=postgres")
+        print("  SUPABASE_DB_USER=postgres")
+        print("  SUPABASE_DB_PORT=5432")
