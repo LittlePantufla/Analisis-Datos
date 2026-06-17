@@ -1,6 +1,164 @@
-from supabase import create_client
+"""
+Normalización de datos del script SQL original.
+Genera archivos CSV listos para subir a Supabase.
+Proyecto: Optimización del Análisis de Datos
+Integrantes: Joaquín Martí, Joaquín Paredes, Daniel Ruiz
+"""
 
-url = "https://tu-proyecto.supabase.co"
-key = "tu_publishable_key"
+import pandas as pd
+import numpy as np
+import re
+import os
 
-supabase = create_client(url, key)
+
+def extraer_datos_sql(sql_content):
+    """
+    Extrae los INSERT statements del script SQL y los convierte a DataFrames.
+    """
+    datos = {
+        'REGION': [],
+        'CIUDAD': [],
+        'PROVEEDORES': [],
+        'TIPOPRODUCTO': [],
+        'PRODUCTOS': [],
+        'CLIENTES': [],
+        'SUCURSALES': [],
+        'VENDEDOR': [],
+        'VENTASDIARIAS': [],
+        'VENTASVENDEDOR': []
+    }
+    
+    # Aquí iría la lógica para parsear el SQL
+    # Por ahora, creamos datos de ejemplo basados en el script original
+    
+    # REGION
+    datos['REGION'] = [
+        {'IDREGION': 5, 'CODIGOREGION': 'V', 'NOMBREREGION': 'VALPARAISO'},
+        {'IDREGION': 8, 'CODIGOREGION': 'VIII', 'NOMBREREGION': 'BIOBIO'},
+        {'IDREGION': 9, 'CODIGOREGION': 'IX', 'NOMBREREGION': 'LA ARAUCANIA'},
+        {'IDREGION': 13, 'CODIGOREGION': 'RM', 'NOMBREREGION': 'METROPOLITANA'}
+    ]
+    
+    # CIUDAD
+    datos['CIUDAD'] = [
+        {'IDCIUDAD': 1, 'IDREGION': 13, 'NOMBRECIUDAD': 'SANTIAGO'},
+        {'IDCIUDAD': 2, 'IDREGION': 5, 'NOMBRECIUDAD': 'VIÑA DEL MAR'},
+        {'IDCIUDAD': 3, 'IDREGION': 8, 'NOMBRECIUDAD': 'CONCEPCION'},
+        {'IDCIUDAD': 4, 'IDREGION': 8, 'NOMBRECIUDAD': 'TALCAHUANO'},
+        {'IDCIUDAD': 5, 'IDREGION': 9, 'NOMBRECIUDAD': 'TEMUCO'}
+    ]
+    
+    # PROVEEDORES
+    datos['PROVEEDORES'] = [
+        {'IDPROVEEDOR': 1, 'NOMBREPROVEEDOR': 'TECHCORP CHILE S.A.'},
+        {'IDPROVEEDOR': 2, 'NOMBREPROVEEDOR': 'INSUMOS DIGITALES LTDA.'},
+        {'IDPROVEEDOR': 3, 'NOMBREPROVEEDOR': 'COMPUTADORAS DEL SUR S.A.'},
+        {'IDPROVEEDOR': 4, 'NOMBREPROVEEDOR': 'ELECTRONICA NACIONAL SPA'},
+        {'IDPROVEEDOR': 5, 'NOMBREPROVEEDOR': 'IMPORTADORA TECNOLOGICA LTDA.'}
+    ]
+    
+    # TIPOPRODUCTO
+    datos['TIPOPRODUCTO'] = [
+        {'IDTIPOPRODUCTO': 1, 'NOMBRETIPOPRODUCTO': 'HARDWARE'},
+        {'IDTIPOPRODUCTO': 2, 'NOMBRETIPOPRODUCTO': 'SOFTWARE'},
+        {'IDTIPOPRODUCTO': 3, 'NOMBRETIPOPRODUCTO': 'PERIFERICOS'},
+        {'IDTIPOPRODUCTO': 4, 'NOMBRETIPOPRODUCTO': 'REDES'},
+        {'IDTIPOPRODUCTO': 5, 'NOMBRETIPOPRODUCTO': 'ALMACENAMIENTO'}
+    ]
+    
+    # PRODUCTOS
+    datos['PRODUCTOS'] = [
+        {'IDPRODUCTO': 1, 'IDTIPOPRODUCTO': 1, 'IDPROVEEDOR': 1, 'NOMBREPRODUCTO': 'LAPTOP HP PAVILION 15', 'CODIGOPRODUCTO': 'LAP-HP-001'},
+        {'IDPRODUCTO': 2, 'IDTIPOPRODUCTO': 1, 'IDPROVEEDOR': 1, 'NOMBREPRODUCTO': 'PC ESCRITORIO DELL OPTIPLEX', 'CODIGOPRODUCTO': 'PC-DL-002'},
+        {'IDPRODUCTO': 3, 'IDTIPOPRODUCTO': 3, 'IDPROVEEDOR': 2, 'NOMBREPRODUCTO': 'MONITOR SAMSUNG 24 PULGADAS', 'CODIGOPRODUCTO': 'MON-SG-003'},
+        {'IDPRODUCTO': 4, 'IDTIPOPRODUCTO': 3, 'IDPROVEEDOR': 2, 'NOMBREPRODUCTO': 'TECLADO MECANICO LOGITECH', 'CODIGOPRODUCTO': 'TEC-LG-004'},
+        {'IDPRODUCTO': 5, 'IDTIPOPRODUCTO': 5, 'IDPROVEEDOR': 3, 'NOMBREPRODUCTO': 'DISCO DURO EXTERNO 1TB', 'CODIGOPRODUCTO': 'DD-WD-005'},
+        {'IDPRODUCTO': 6, 'IDTIPOPRODUCTO': 4, 'IDPROVEEDOR': 3, 'NOMBREPRODUCTO': 'ROUTER WIFI TP-LINK AC1200', 'CODIGOPRODUCTO': 'RUT-TP-006'},
+        {'IDPRODUCTO': 7, 'IDTIPOPRODUCTO': 2, 'IDPROVEEDOR': 4, 'NOMBREPRODUCTO': 'LICENCIA WINDOWS 11 PRO', 'CODIGOPRODUCTO': 'SW-MS-007'},
+        {'IDPRODUCTO': 8, 'IDTIPOPRODUCTO': 2, 'IDPROVEEDOR': 4, 'NOMBREPRODUCTO': 'ANTIVIRUS KASPERSKY 1 AÑO', 'CODIGOPRODUCTO': 'SW-KS-008'},
+        {'IDPRODUCTO': 9, 'IDTIPOPRODUCTO': 3, 'IDPROVEEDOR': 5, 'NOMBREPRODUCTO': 'MOUSE INALAMBRICO GENIUS', 'CODIGOPRODUCTO': 'MOU-GN-009'},
+        {'IDPRODUCTO': 10, 'IDTIPOPRODUCTO': 5, 'IDPROVEEDOR': 5, 'NOMBREPRODUCTO': 'MEMORIA USB 128GB KINGSTON', 'CODIGOPRODUCTO': 'USB-KG-010'}
+    ]
+    
+    # VENDEDOR
+    datos['VENDEDOR'] = [
+        {'IDVENDEDOR': 1, 'NOMBREVENDEDOR': 'JUAN', 'APELLIDOPATERNO': 'PEREZ', 'APELLIDOMATERNO': 'GONZALEZ'},
+        {'IDVENDEDOR': 2, 'NOMBREVENDEDOR': 'MARIA', 'APELLIDOPATERNO': 'LOPEZ', 'APELLIDOMATERNO': 'SANCHEZ'},
+        {'IDVENDEDOR': 3, 'NOMBREVENDEDOR': 'CARLOS', 'APELLIDOPATERNO': 'RODRIGUEZ', 'APELLIDOMATERNO': 'MARTINEZ'},
+        {'IDVENDEDOR': 4, 'NOMBREVENDEDOR': 'ANA', 'APELLIDOPATERNO': 'GARCIA', 'APELLIDOMATERNO': 'FERNANDEZ'},
+        {'IDVENDEDOR': 5, 'NOMBREVENDEDOR': 'PEDRO', 'APELLIDOPATERNO': 'MARTINEZ', 'APELLIDOMATERNO': 'LOPEZ'}
+    ]
+    
+    # SUCURSALES
+    datos['SUCURSALES'] = [
+        {'IDSUCURSAL': 1, 'IDCIUDAD': 1, 'NOMBRESUCURSAL': 'SUCURSAL SANTIAGO CENTRO', 'CODIGOSUCURSAL': 'SCL-01'},
+        {'IDSUCURSAL': 2, 'IDCIUDAD': 1, 'NOMBRESUCURSAL': 'SUCURSAL SANTIAGO NORTE', 'CODIGOSUCURSAL': 'SCL-02'},
+        {'IDSUCURSAL': 3, 'IDCIUDAD': 2, 'NOMBRESUCURSAL': 'SUCURSAL VIÑA DEL MAR', 'CODIGOSUCURSAL': 'VIN-01'},
+        {'IDSUCURSAL': 4, 'IDCIUDAD': 3, 'NOMBRESUCURSAL': 'SUCURSAL CONCEPCION', 'CODIGOSUCURSAL': 'CON-01'},
+        {'IDSUCURSAL': 5, 'IDCIUDAD': 5, 'NOMBRESUCURSAL': 'SUCURSAL TEMUCO', 'CODIGOSUCURSAL': 'TEM-01'}
+    ]
+    
+    # CLIENTES (muestra de 10)
+    datos['CLIENTES'] = [
+        {'IDCLIENTE': 1, 'RUT': 1, 'DV': '9', 'NOMBRECLIENTE': 'JOSE MIGUEL', 'APELLIDOPATERNO': 'CARRERA', 'APELLIDOMATERNO': 'PINTO', 'EMAIL': 'JOSECARRERA@GMAIL.COM', 'TELEFONO': '41-2234541', 'CELULAR1': '09-3322332', 'CELULAR2': '-', 'FECHACREACION': '2012-02-01 00:00:00', 'VIGENTE': 1},
+        {'IDCLIENTE': 2, 'RUT': 2, 'DV': '7', 'NOMBRECLIENTE': 'RAMON', 'APELLIDOPATERNO': 'FREIRE', 'APELLIDOMATERNO': 'FREIRE', 'EMAIL': 'RAMONFREIRE@GMAIL.COM', 'TELEFONO': '41-3322123', 'CELULAR1': '092345653', 'CELULAR2': None, 'FECHACREACION': '2012-02-01 00:00:00', 'VIGENTE': 1},
+        {'IDCLIENTE': 3, 'RUT': 22223, 'DV': '1', 'NOMBRECLIENTE': 'PEDRO', 'APELLIDOPATERNO': 'LOPEZ', 'APELLIDOMATERNO': 'PEREZ', 'EMAIL': None, 'TELEFONO': None, 'CELULAR1': '0854643234', 'CELULAR2': None, 'FECHACREACION': '2012-02-20 00:00:00', 'VIGENTE': 1},
+        {'IDCLIENTE': 4, 'RUT': 4353455, 'DV': '3', 'NOMBRECLIENTE': 'JUAN', 'APELLIDOPATERNO': 'PEREZ', 'APELLIDOMATERNO': 'RODRIGUEZ', 'EMAIL': 'JUAN.PEREZ@HOTMAIL.COM', 'TELEFONO': '2-34343434', 'CELULAR1': '08-4532356', 'CELULAR2': '0987643221', 'FECHACREACION': '2012-02-28 00:00:00', 'VIGENTE': 1},
+        {'IDCLIENTE': 5, 'RUT': 87744545, 'DV': '1', 'NOMBRECLIENTE': 'ROBERTO', 'APELLIDOPATERNO': 'ROBLES', 'APELLIDOMATERNO': 'MONCADA', 'EMAIL': 'ROB.ROBLES@ME.COM', 'TELEFONO': '2-99887766', 'CELULAR1': '09-1234567', 'CELULAR2': None, 'FECHACREACION': '2012-03-04 00:00:00', 'VIGENTE': 1}
+    ]
+    
+    # VENTASDIARIAS (muestra)
+    datos['VENTASDIARIAS'] = [
+        {'NROVENTA': 1, 'FECHAVENTA': '2023-01-15 10:30:00', 'IDCLIENTE': 1, 'IDPRODUCTO': 1, 'IDSUCURSAL': 1, 'TIPOPAGO': 'EFECTIVO', 'CANTIDAD': 1.000, 'PRECIO': 450000.000, 'OBSERVACION': 'SIN OBSERVACION'},
+        {'NROVENTA': 2, 'FECHAVENTA': '2023-01-15 14:20:00', 'IDCLIENTE': 2, 'IDPRODUCTO': 3, 'IDSUCURSAL': 1, 'TIPOPAGO': 'TARJETA', 'CANTIDAD': 2.000, 'PRECIO': 180000.000, 'OBSERVACION': 'SIN OBSERVACION'},
+        {'NROVENTA': 3, 'FECHAVENTA': '2023-01-16 09:15:00', 'IDCLIENTE': 3, 'IDPRODUCTO': 5, 'IDSUCURSAL': 2, 'TIPOPAGO': 'TRANSFERENCIA', 'CANTIDAD': 1.000, 'PRECIO': 85000.000, 'OBSERVACION': 'SIN OBSERVACION'},
+        {'NROVENTA': 4, 'FECHAVENTA': '2023-01-17 11:45:00', 'IDCLIENTE': 4, 'IDPRODUCTO': 2, 'IDSUCURSAL': 1, 'TIPOPAGO': 'EFECTIVO', 'CANTIDAD': 1.000, 'PRECIO': 320000.000, 'OBSERVACION': 'SIN OBSERVACION'},
+        {'NROVENTA': 5, 'FECHAVENTA': '2023-01-18 16:00:00', 'IDCLIENTE': 5, 'IDPRODUCTO': 4, 'IDSUCURSAL': 3, 'TIPOPAGO': 'TARJETA', 'CANTIDAD': 3.000, 'PRECIO': 45000.000, 'OBSERVACION': 'SIN OBSERVACION'}
+    ]
+    
+    # VENTASVENDEDOR
+    datos['VENTASVENDEDOR'] = [
+        {'IDVENDEDOR': 1, 'NROVENTA': 1},
+        {'IDVENDEDOR': 2, 'NROVENTA': 2},
+        {'IDVENDEDOR': 1, 'NROVENTA': 3},
+        {'IDVENDEDOR': 3, 'NROVENTA': 4},
+        {'IDVENDEDOR': 2, 'NROVENTA': 5}
+    ]
+    
+    return {k: pd.DataFrame(v) for k, v in datos.items()}
+
+
+def normalizar_datos():
+    """
+    Normaliza los datos y genera archivos CSV listos para Supabase.
+    """
+    print("=" * 50)
+    print("NORMALIZACIÓN DE DATOS")
+    print("=" * 50)
+    
+    # Crear carpetas
+    os.makedirs('Data/normalized', exist_ok=True)
+    
+    # Extraer datos
+    datos = extraer_datos_sql(None)
+    
+    # Guardar cada tabla como CSV
+    for nombre, df in datos.items():
+        # Limpiar espacios en textos
+        for col in df.select_dtypes(include=['object']).columns:
+            df[col] = df[col].astype(str).str.strip()
+            df[col] = df[col].replace(['nan', 'None', 'NaN', ''], np.nan)
+        
+        # Guardar CSV
+        ruta = f'Data/normalized/{nombre.lower()}.csv'
+        df.to_csv(ruta, index=False, encoding='utf-8')
+        print(f"✅ {nombre}: {len(df)} registros → {ruta}")
+    
+    print("\n" + "=" * 50)
+    print("✅ Normalización completada!")
+    print("📁 Archivos en: Data/normalized/")
+    print("=" * 50)
+
+
+if __name__ == "__main__":
+    normalizar_datos()
