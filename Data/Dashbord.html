@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard de Ventas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'edu-primary': '#1e3a5f',
+            'edu-secondary': '#2c5282',
+            'edu-accent': '#3182ce',
+            'edu-light': '#e2e8f0',
+            'edu-bg': '#f8fafc',
+            'edu-card': '#ffffff',
+            'edu-text': '#1a202c',
+            'edu-muted': '#64748b',
+            'edu-border': '#cbd5e1',
+            'edu-success': '#059669',
+            'edu-error': '#dc2626',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { 
+      background: #f1f5f9; 
+      color: #1a202c; 
+      font-family: 'Segoe UI', ui-sans-serif, system-ui, sans-serif; 
+    }
+    ::-webkit-scrollbar { width: 6px; } 
+    ::-webkit-scrollbar-track { background: #e2e8f0; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+    .edu-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); }
+    .edu-shadow-hover { box-shadow: 0 4px 6px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06); }
+    .month-btn {
+      transition: all 0.2s ease;
+    }
+    .month-btn.active {
+      background-color: #3182ce;
+      color: white;
+      border-color: #3182ce;
+    }
+    .month-btn:hover:not(.active) {
+      background-color: #e2e8f0;
+    }
+    .data-table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .data-table th {
+      background: #f8fafc;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .data-table td {
+      font-size: 13px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1a202c;
+    }
+    .data-table tr:hover td {
+      background: #f8fafc;
+    }
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+  </style>
+<base target="_blank">
+</head>
+<body class="min-h-screen">
+
+  <!-- Header Académico -->
+  <header class="bg-edu-primary border-b border-edu-secondary px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-base font-semibold text-white">Dashboard de Ventas</h1>
+        <p class="text-xs text-blue-200 mt-0.5">Optimización del Análisis de Datos · Empresa Ensigna</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="badge" class="text-xs px-3 py-1 rounded-full bg-white/10 text-blue-200 border border-white/20">
+        Sin conectar
+      </span>
+      <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+        <svg class="w-4 h-4 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-8 space-y-8">
+
+    <!-- Credenciales -->
+    <section id="cred-section" class="bg-edu-card border border-edu-border rounded-xl p-6 space-y-4 edu-shadow">
+      <div class="flex items-center gap-2 mb-2">
+        <svg class="w-5 h-5 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        <h2 class="text-sm font-semibold text-edu-text">Configuración de Conexión</h2>
+      </div>
+      <p class="text-sm text-edu-muted">Ingrese las credenciales de su proyecto Supabase para cargar los datos de ventas.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-1">
+          <label class="text-xs font-medium text-edu-text">URL del Proyecto</label>
+          <input id="inp-url" type="text" placeholder="https://xxxx.supabase.co"
+            class="w-full bg-slate-50 border border-edu-border rounded-lg px-3 py-2.5 text-sm text-edu-text placeholder-slate-400 focus:outline-none focus:border-edu-accent focus:ring-2 focus:ring-blue-100 transition-all" />
+        </div>
+        <div class="space-y-1">
+          <label class="text-xs font-medium text-edu-text">API Key (Publishable)</label>
+          <input id="inp-key" type="password" placeholder="eyJhbGciOiJIUzI1NiIs..."
+            class="w-full bg-slate-50 border border-edu-border rounded-lg px-3 py-2.5 text-sm text-edu-text placeholder-slate-400 focus:outline-none focus:border-edu-accent focus:ring-2 focus:ring-blue-100 transition-all" />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button onclick="cargar()"
+          class="bg-edu-accent hover:bg-edu-secondary text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors edu-shadow">
+          Conectar
+        </button>
+        <button onclick="limpiar()"
+          class="text-sm text-edu-muted hover:text-edu-text px-3 py-2.5 rounded-lg transition-colors">
+          Limpiar
+        </button>
+      </div>
+
+      <div id="err-box" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+        <svg class="w-4 h-4 text-edu-error mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p id="err" class="text-xs text-edu-error"></p>
+      </div>
+    </section>
+
+    <!-- Selector de Meses -->
+    <section id="month-section" class="hidden">
+      <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <p class="text-sm font-semibold text-edu-text">Filtrar por Período</p>
+        </div>
+        <div class="flex flex-wrap gap-2" id="month-buttons">
+          <!-- Botones de meses se generan dinámicamente -->
+        </div>
+        <div class="flex items-center gap-3 mt-4 pt-3 border-t border-edu-border">
+          <button id="btn-all" onclick="filtrarMes('all')" class="month-btn active text-xs px-3 py-1.5 rounded-md border border-edu-border text-edu-muted font-medium">
+            Todo el período
+          </button>
+          <p id="periodo-actual" class="text-xs text-edu-muted">Mostrando todos los registros</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Métricas -->
+    <section id="metrics-section" class="hidden">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Ventas Totales</p>
+            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-edu-text" id="m1">—</p>
+          <p class="text-xs text-edu-muted mt-1">Registros procesados</p>
+        </div>
+
+        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Ingresos</p>
+            <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-edu-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-edu-text" id="m2">—</p>
+          <p class="text-xs text-edu-muted mt-1">Total acumulado</p>
+        </div>
+
+        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Productos</p>
+            <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+              </svg>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-edu-text" id="m3">—</p>
+          <p class="text-xs text-edu-muted mt-1">Diferentes SKU</p>
+        </div>
+
+        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Sucursales</p>
+            <div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+          </div>
+          <p class="text-2xl font-bold text-edu-text" id="m4">—</p>
+          <p class="text-xs text-edu-muted mt-1">Puntos de venta</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Gráficos -->
+    <section id="charts-section" class="hidden space-y-4">
+
+      <!-- Ingresos por mes -->
+      <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+          </svg>
+          <p class="text-sm font-semibold text-edu-text">Ingresos por Mes</p>
+        </div>
+        <div style="position:relative; height:220px;">
+          <canvas id="c-mes" role="img" aria-label="Ingresos por mes">Cargando...</canvas>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Top productos -->
+        <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            </svg>
+            <p class="text-sm font-semibold text-edu-text">Top 5 Productos</p>
+          </div>
+          <div style="position:relative; height:200px;">
+            <canvas id="c-prod" role="img" aria-label="Top 5 productos">Cargando...</canvas>
+          </div>
+        </div>
+
+        <!-- Tipo de pago -->
+        <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+            </svg>
+            <p class="text-sm font-semibold text-edu-text">Tipo de Pago</p>
+          </div>
+          <div style="position:relative; height:200px;">
+            <canvas id="c-pago" role="img" aria-label="Tipo de pago">Cargando...</canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Top sucursales -->
+      <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
+        <div class="flex items-center gap-2 mb-4">
+          <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <p class="text-sm font-semibold text-edu-text">Top 5 Sucursales por Ingresos</p>
+        </div>
+        <div style="position:relative; height:200px;">
+          <canvas id="c-suc" role="img" aria-label="Top sucursales">Cargando...</canvas>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Tabla de Datos Crudos -->
+    <section id="data-section" class="hidden">
+      <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <p class="text-sm font-semibold text-edu-text">Registros de Ventas</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="data-count" class="text-xs text-edu-muted bg-slate-100 px-2 py-1 rounded-md">0 registros</span>
+            <button onclick="descargarCSV()" class="text-xs text-edu-accent hover:text-edu-secondary font-medium px-3 py-1.5 rounded-md border border-edu-border hover:bg-slate-50 transition-colors flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              CSV
+            </button>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-lg border border-edu-border">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Sucursal</th>
+                <th>Tipo Pago</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="data-tbody">
+              <!-- Filas generadas dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between mt-3">
+          <p class="text-xs text-edu-muted">Mostrando máximo 100 registros del filtro actual</p>
+          <div class="flex items-center gap-2">
+            <button onclick="cambiarPagina(-1)" id="btn-prev" class="text-xs px-2 py-1 rounded border border-edu-border text-edu-muted hover:bg-slate-50 disabled:opacity-40">
+              ← Anterior
+            </button>
+            <span id="page-info" class="text-xs text-edu-muted">Página 1</span>
+            <button onclick="cambiarPagina(1)" id="btn-next" class="text-xs px-2 py-1 rounded border border-edu-border text-edu-muted hover:bg-slate-50 disabled:opacity-40">
+              Siguiente →
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="border-t border-edu-border pt-4 pb-2">
+      <p id="st" class="text-xs text-edu-muted text-center">Ingrese sus credenciales de Supabase para comenzar el análisis.</p>
+    </div>
+
+  </main>
+
+  <script>
+    const PAL = ['#3182ce','#38a169','#dd6b20','#805ad5','#e53e3e','#00b5d8','#d69e2e'];
+    const TICK = { font: { size: 11, family: "'Segoe UI', sans-serif" }, color: '#64748b' };
+    const GRID = { color: 'rgba(100,116,139,0.08)' };
+    let cx = {};
+    let datosCrudos = [];
+    let productosMap = {};
+    let sucursalesMap = {};
+    let mesesDisponibles = [];
+    let mesSeleccionado = 'all';
+    let paginaActual = 1;
+    const REGISTROS_POR_PAGINA = 100;
+
+    const NOMBRES_MESES = {
+      '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr',
+      '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Ago',
+      '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dic'
+    };
+
+    function formatearMes(key) {
+      const [anio, mes] = key.split('-');
+      return `${NOMBRES_MESES[mes]} ${anio}`;
+    }
+
+    function fmt(n) {
+      if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+      if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+      return '$' + Math.round(n);
+    }
+
+    function formatearFecha(fechaStr) {
+      if (!fechaStr) return '-';
+      const d = new Date(fechaStr);
+      if (isNaN(d)) return fechaStr;
+      return d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    function bar(id, labels, data, color, horizontal) {
+      if (cx[id]) cx[id].destroy();
+      cx[id] = new Chart(document.getElementById(id), {
+        type: 'bar',
+        data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4, borderSkipped: false }] },
+        options: {
+          indexAxis: horizontal ? 'y' : 'x',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: GRID, ticks: { ...TICK, maxRotation: horizontal ? 0 : 40, autoSkip: false } },
+            y: { grid: GRID, ticks: { ...TICK, callback: v => horizontal ? v : fmt(v) } }
+          }
+        }
+      });
+    }
+
+    function donut(id, labels, data) {
+      if (cx[id]) cx[id].destroy();
+      cx[id] = new Chart(document.getElementById(id), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: PAL.slice(0, data.length), borderWidth: 0 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '65%',
+          plugins: { legend: { position: 'right', labels: { font: { size: 11, family: "'Segoe UI', sans-serif" }, color: '#64748b', boxWidth: 10, boxHeight: 10 } } }
+        }
+      });
+    }
+
+    function generarBotonesMeses() {
+      const container = document.getElementById('month-buttons');
+      container.innerHTML = '';
+
+      mesesDisponibles.forEach(mesKey => {
+        const btn = document.createElement('button');
+        btn.className = 'month-btn text-xs px-3 py-1.5 rounded-md border border-edu-border text-edu-muted font-medium';
+        btn.textContent = formatearMes(mesKey);
+        btn.onclick = () => filtrarMes(mesKey);
+        btn.dataset.mes = mesKey;
+        container.appendChild(btn);
+      });
+    }
+
+    function filtrarMes(mesKey) {
+      mesSeleccionado = mesKey;
+      paginaActual = 1;
+
+      document.querySelectorAll('.month-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+      if (mesKey === 'all') {
+        document.getElementById('btn-all').classList.add('active');
+        document.getElementById('periodo-actual').textContent = 'Mostrando todos los registros';
+      } else {
+        const btn = document.querySelector(`[data-mes="${mesKey}"]`);
+        if (btn) btn.classList.add('active');
+        document.getElementById('periodo-actual').textContent = `Período: ${formatearMes(mesKey)}`;
+      }
+
+      actualizarDashboard();
+    }
+
+    function obtenerDatosFiltrados() {
+      if (mesSeleccionado === 'all') {
+        return datosCrudos;
+      }
+      return datosCrudos.filter(r => r.fechaventa?.slice(0, 7) === mesSeleccionado);
+    }
+
+    function actualizarTabla() {
+      const v = obtenerDatosFiltrados();
+      const totalRegistros = v.length;
+
+      document.getElementById('data-count').textContent = `${totalRegistros.toLocaleString('es-CL')} registros`;
+
+      const inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
+      const fin = inicio + REGISTROS_POR_PAGINA;
+      const paginaDatos = v.slice(inicio, fin);
+
+      const tbody = document.getElementById('data-tbody');
+      tbody.innerHTML = '';
+
+      if (paginaDatos.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-edu-muted py-8">No hay registros para mostrar</td></tr>';
+      } else {
+        paginaDatos.forEach(r => {
+          const total = r.cantidad * r.precio;
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${formatearFecha(r.fechaventa)}</td>
+            <td>${productosMap[r.idproducto] || '#' + r.idproducto}</td>
+            <td>${sucursalesMap[r.idsucursal] || 'Suc. ' + r.idsucursal}</td>
+            <td><span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">${r.tipopago || '-'}</span></td>
+            <td class="text-right">${r.cantidad}</td>
+            <td class="text-right">$${r.precio?.toLocaleString('es-CL') || '0'}</td>
+            <td class="text-right font-medium">$${total.toLocaleString('es-CL')}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      // Actualizar paginación
+      const totalPaginas = Math.ceil(totalRegistros / REGISTROS_POR_PAGINA) || 1;
+      document.getElementById('page-info').textContent = `Página ${paginaActual} de ${totalPaginas}`;
+      document.getElementById('btn-prev').disabled = paginaActual <= 1;
+      document.getElementById('btn-next').disabled = paginaActual >= totalPaginas;
+    }
+
+    function cambiarPagina(delta) {
+      const v = obtenerDatosFiltrados();
+      const totalPaginas = Math.ceil(v.length / REGISTROS_POR_PAGINA) || 1;
+      const nuevaPagina = paginaActual + delta;
+
+      if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
+        paginaActual = nuevaPagina;
+        actualizarTabla();
+      }
+    }
+
+    function descargarCSV() {
+      const v = obtenerDatosFiltrados();
+      let csv = 'Fecha,Producto,Sucursal,Tipo Pago,Cantidad,Precio Unitario,Total\n';
+
+      v.forEach(r => {
+        const total = r.cantidad * r.precio;
+        csv += `${r.fechaventa || ''},${(productosMap[r.idproducto] || '#' + r.idproducto).replace(/,/g, ' ')},${(sucursalesMap[r.idsucursal] || 'Suc. ' + r.idsucursal).replace(/,/g, ' ')},${r.tipopago || ''},${r.cantidad},${r.precio || 0},${total}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `ventas_${mesSeleccionado === 'all' ? 'todos' : mesSeleccionado}.csv`;
+      link.click();
+    }
+
+    function actualizarDashboard() {
+      const v = obtenerDatosFiltrados();
+
+      if (v.length === 0) {
+        document.getElementById('m1').textContent = '0';
+        document.getElementById('m2').textContent = '$0';
+        document.getElementById('m3').textContent = '0';
+        document.getElementById('m4').textContent = '0';
+      } else {
+        const ingresos = v.reduce((s, r) => s + r.cantidad * r.precio, 0);
+        const productos = new Set(v.map(r => r.idproducto)).size;
+        const sucursales = new Set(v.map(r => r.idsucursal)).size;
+        document.getElementById('m1').textContent = v.length.toLocaleString('es-CL');
+        document.getElementById('m2').textContent = fmt(ingresos);
+        document.getElementById('m3').textContent = productos;
+        document.getElementById('m4').textContent = sucursales;
+      }
+
+      // Ingresos por mes (siempre muestra todos los meses, pero resalta el seleccionado)
+      const mes = {};
+      datosCrudos.forEach(r => {
+        const k = r.fechaventa?.slice(0, 7);
+        if (k) mes[k] = (mes[k] || 0) + r.cantidad * r.precio;
+      });
+      const mk = Object.keys(mes).sort().slice(-12);
+      const coloresMes = mk.map(k => k === mesSeleccionado ? '#3182ce' : '#94a3b8');
+
+      if (cx['c-mes']) cx['c-mes'].destroy();
+      cx['c-mes'] = new Chart(document.getElementById('c-mes'), {
+        type: 'bar',
+        data: { 
+          labels: mk.map(formatearMes), 
+          datasets: [{ data: mk.map(k => Math.round(mes[k])), backgroundColor: coloresMes, borderRadius: 4, borderSkipped: false }] 
+        },
+        options: {
+          indexAxis: 'x',
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: GRID, ticks: { ...TICK, maxRotation: 40, autoSkip: false } },
+            y: { grid: GRID, ticks: { ...TICK, callback: v => fmt(v) } }
+          }
+        }
+      });
+
+      // Top 5 productos (filtrados)
+      const pp = {};
+      v.forEach(r => {
+        const n = (productosMap[r.idproducto] || '#' + r.idproducto).substring(0, 20);
+        pp[n] = (pp[n] || 0) + r.cantidad * r.precio;
+      });
+      const tp = Object.entries(pp).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      bar('c-prod', tp.map(e => e[0]), tp.map(e => Math.round(e[1])), PAL[1], true);
+
+      // Tipo de pago (filtrados)
+      const pg = {};
+      v.forEach(r => { pg[r.tipopago] = (pg[r.tipopago] || 0) + 1; });
+      donut('c-pago', Object.keys(pg), Object.values(pg));
+
+      // Top 5 sucursales (filtradas)
+      const ss = {};
+      v.forEach(r => {
+        const n = (sucursalesMap[r.idsucursal] || 'Suc. ' + r.idsucursal).substring(0, 22);
+        ss[n] = (ss[n] || 0) + r.cantidad * r.precio;
+      });
+      const ts = Object.entries(ss).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      bar('c-suc', ts.map(e => e[0]), ts.map(e => Math.round(e[1])), PAL[2], true);
+
+      // Actualizar tabla
+      actualizarTabla();
+    }
+
+    function limpiar() {
+      document.getElementById('inp-url').value = '';
+      document.getElementById('inp-key').value = '';
+      document.getElementById('err-box').classList.add('hidden');
+    }
+
+    async function cargar() {
+      const url = document.getElementById('inp-url').value.trim();
+      const key = document.getElementById('inp-key').value.trim();
+      const errBox = document.getElementById('err-box');
+      const err = document.getElementById('err');
+      errBox.classList.add('hidden');
+
+      if (!url || !key) {
+        err.textContent = 'Por favor complete ambos campos de conexión.';
+        errBox.classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('badge').textContent = 'Conectando...';
+      document.getElementById('badge').className = 'text-xs px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200';
+      document.getElementById('st').textContent = 'Estableciendo conexión con la base de datos...';
+
+      try {
+        const db = supabase.createClient(url, key);
+
+        const { data: v, error } = await db
+          .from('ventasdiarias')
+          .select('fechaventa, idproducto, idsucursal, tipopago, cantidad, precio');
+        if (error) throw error;
+
+        const { data: prods } = await db.from('productos').select('idproducto, nombreproducto');
+        const { data: sucs }  = await db.from('sucursales').select('idsucursal, nombresucursal');
+
+        productosMap = Object.fromEntries((prods || []).map(p => [p.idproducto, p.nombreproducto]));
+        sucursalesMap = Object.fromEntries((sucs  || []).map(s => [s.idsucursal, s.nombresucursal]));
+        datosCrudos = v;
+
+        // Extraer meses disponibles
+        const mesesSet = new Set();
+        v.forEach(r => {
+          const k = r.fechaventa?.slice(0, 7);
+          if (k) mesesSet.add(k);
+        });
+        mesesDisponibles = Array.from(mesesSet).sort();
+
+        // Mostrar secciones
+        document.getElementById('cred-section').style.display = 'none';
+        document.getElementById('month-section').classList.remove('hidden');
+        document.getElementById('metrics-section').classList.remove('hidden');
+        document.getElementById('charts-section').classList.remove('hidden');
+        document.getElementById('data-section').classList.remove('hidden');
+
+        // Generar botones de meses
+        generarBotonesMeses();
+
+        // Inicializar con "Todo"
+        mesSeleccionado = 'all';
+        paginaActual = 1;
+        document.getElementById('btn-all').classList.add('active');
+        actualizarDashboard();
+
+        // UI feedback
+        document.getElementById('badge').textContent = 'Conectado';
+        document.getElementById('badge').className = 'text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 border border-green-200';
+        document.getElementById('st').textContent = v.length.toLocaleString('es-CL') + ' registros cargados correctamente.';
+
+      } catch (e) {
+        const msg = e.message || JSON.stringify(e);
+        err.textContent = 'Error de conexión: ' + msg;
+        errBox.classList.remove('hidden');
+        document.getElementById('badge').textContent = 'Error';
+        document.getElementById('badge').className = 'text-xs px-3 py-1 rounded-full bg-red-100 text-red-700 border border-red-200';
+        document.getElementById('st').textContent = 'Revise las credenciales e intente nuevamente.';
+      }
+    }
+  </script>
+
+</body>
+</html>
