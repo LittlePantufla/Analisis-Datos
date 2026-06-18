@@ -8,10 +8,12 @@ Integrantes: Joaquín Martí, Joaquín Paredes, Daniel Ruiz
 
 import os
 import pandas as pd
+from pathlib import Path
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 
-load_dotenv()
+# Busca el .env en la raíz del proyecto (un nivel arriba de SRC/)
+load_dotenv(Path(__file__).parent.parent / '.venv/.env')
 
 
 def get_engine():
@@ -22,7 +24,7 @@ def get_engine():
     host     = os.getenv('SUPABASE_DB_HOST')
     db       = os.getenv('SUPABASE_DB_NAME', 'postgres')
     user     = os.getenv('SUPABASE_DB_USER', 'postgres')
-    password = os.getenv('Hipopotamo09.')
+    password = os.getenv('SUPABASE_DB_PASSWORD')
     port     = os.getenv('SUPABASE_DB_PORT', '5432')
 
     if not host or not password:
@@ -35,7 +37,6 @@ def get_engine():
 def load_table(table_name):
     """Carga una tabla completa como DataFrame."""
     engine = get_engine()
-    # Comillas dobles para respetar el nombre exacto en PostgreSQL
     query = f'SELECT * FROM "{table_name}"'
     return pd.read_sql(query, engine)
 
@@ -51,7 +52,6 @@ def load_all_tables():
     Carga todas las tablas del proyecto.
     Retorna un diccionario {nombre: DataFrame}.
     """
-    # Nombres en minúsculas — así quedaron creadas en Supabase
     nombres = [
         'region',
         'tipoproducto',
@@ -94,7 +94,6 @@ if __name__ == "__main__":
         tablas = load_all_tables()
         print("\n✅ Conexión exitosa.\n")
 
-        # Mostrar muestra de clientes
         if tablas.get('clientes') is not None:
             print("Muestra de CLIENTES:")
             print(tablas['clientes'].head(3).to_string(index=False))

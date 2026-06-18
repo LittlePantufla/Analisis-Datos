@@ -7,14 +7,16 @@ Integrantes: Joaquín Martí, Joaquín Paredes, Daniel Ruiz
 """
 
 import os
-import math 
-import pandas as pd
+import math
 import numpy as np
+import pandas as pd
+from pathlib import Path
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from pathlib import Path
-load_dotenv(Path(__file__).parent.parent / 'SRC/.env')
- 
+
+# Busca el .env en la raíz del proyecto (un nivel arriba de SRC/)
+load_dotenv(Path(__file__).parent.parent / '.venv/.env')
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
@@ -23,77 +25,74 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+BASE_DIR = Path(__file__).parent.parent
+
 # Orden respetando dependencias FK
 # (las tablas base primero, las que tienen FK al final)
 TABLAS = [
-    ('region',         'Data/normalized/region.csv'),
-    ('tipoproducto',   'Data/normalized/tipoproducto.csv'),
-    ('proveedores',    'Data/normalized/proveedores.csv'),
-    ('vendedor',       'Data/normalized/vendedor.csv'),
-    ('ciudad',         'Data/normalized/ciudad.csv'),
-    ('sucursales',     'Data/normalized/sucursales.csv'),
-    ('productos',      'Data/normalized/productos.csv'),
-    ('clientes',       'Data/normalized/clientes.csv'),
-    ('ventasdiarias',  'Data/normalized/ventasdiarias.csv'),
-    ('ventasvendedor', 'Data/normalized/ventasvendedor.csv'),
+    ('region',         BASE_DIR / 'Data/normalized/region.csv'),
+    ('tipoproducto',   BASE_DIR / 'Data/normalized/tipoproducto.csv'),
+    ('proveedores',    BASE_DIR / 'Data/normalized/proveedores.csv'),
+    ('vendedor',       BASE_DIR / 'Data/normalized/vendedor.csv'),
+    ('ciudad',         BASE_DIR / 'Data/normalized/ciudad.csv'),
+    ('sucursales',     BASE_DIR / 'Data/normalized/sucursales.csv'),
+    ('productos',      BASE_DIR / 'Data/normalized/productos.csv'),
+    ('clientes',       BASE_DIR / 'Data/normalized/clientes.csv'),
+    ('ventasdiarias',  BASE_DIR / 'Data/normalized/ventasdiarias.csv'),
+    ('ventasvendedor', BASE_DIR / 'Data/normalized/ventasvendedor.csv'),
 ]
 
-import pandas as pd
-import numpy as np
-import math 
+
+def limpiar_valor(val):
+    """
+    Convierte un valor individual a tipo Python nativo compatible con JSON.
+    NaN / inf / strings vacíos → None
+    float sin decimales → int
+    """
+    # None directo
+    if val is None:
+        return None
+
+    # Numpy entero → int Python
+    if isinstance(val, np.integer):
+        return int(val)
+
+    # Numpy / Python float
+    if isinstance(val, (float, np.floating)):
+        f = float(val)
+        if math.isnan(f) or math.isinf(f):
+            return None
+        # Si es .0 convertir a int (ej: 412234541.0 → 412234541)
+        if f.is_integer():
+            return int(f)
+        return f
+
+    # Numpy bool → bool Python
+    if isinstance(val, np.bool_):
+        return bool(val)
+
+    # String vacío o 'nan'
+    if isinstance(val, str) and val.strip().lower() in ('nan', 'none', 'nat', '', '-'):
+        return None
+
+    return val
+
+
 def preparar_df(df):
     """
-    Convierte el DataFrame para que Supabase lo acepte.
+    Convierte el DataFrame completo a lista de dicts listos para Supabase.
     """
-    # 1. Obtener valores crudos de numpy y limpiar manualmente
-    cleaned_records = []
-    
-    for idx in range(len(df)):
-        record = {}
-        for col in df.columns:
-            # Obtener valor crudo (evita que pandas lo envuelva)
-            val = df.iloc[idx][col]
-            
-            # Limpieza exhaustiva
-            if val is None:
-                record[col] = None
-            elif isinstance(val, float):
-                if math.isnan(val) or math.isinf(val):
-                    record[col] = None
-                elif val.is_integer():
-                    record[col] = int(val)
-                else:
-                    record[col] = val
-            elif isinstance(val, np.floating):
-                if np.isnan(val) or np.isinf(val):
-                    record[col] = None
-                elif float(val).is_integer():
-                    record[col] = int(val)
-                else:
-                    record[col] = float(val)
-            elif isinstance(val, np.integer):
-                record[col] = int(val)
-            elif isinstance(val, np.bool_):
-                record[col] = bool(val)
-            elif isinstance(val, str) and val.lower() in ['nan', 'none', 'nat', '']:
-                record[col] = None
-            else:
-                record[col] = val
-        
-        cleaned_records.append(record)
-    
-    # 2. Rellenar columnas NOT NULL
-    columnas_not_null = {
-        'observacion': 'Sin observación',
-    }
-    
-    for record in cleaned_records:
-        for col, default in columnas_not_null.items():
-            if col in record and record[col] is None:
-                record[col] = default
-    
-    # 3. Crear DataFrame nuevo desde cero
-    return pd.DataFrame(cleaned_records)
+    registros = []
+    for _, row in df.iterrows():
+        record = {col: limpiar_valor(row[col]) for col in df.columns}
+
+        # Campo NOT NULL con default
+        if 'observacion' in record and record['observacion'] is None:
+            record['observacion'] = 'Sin observacion'
+
+        registros.append(record)
+    return registros
+
 
 def subir_tabla(tabla, csv_path, batch_size=500):
     """
@@ -105,8 +104,7 @@ def subir_tabla(tabla, csv_path, batch_size=500):
         return 0
 
     df = pd.read_csv(csv_path)
-    df = preparar_df(df)
-    registros = df.to_dict('records')
+    registros = preparar_df(df)
     total = len(registros)
     subidos = 0
 
@@ -119,10 +117,6 @@ def subir_tabla(tabla, csv_path, batch_size=500):
             print(f"  ✅ Batch {n_batch}: {len(batch)} registros")
         except Exception as e:
             print(f"  ❌ Error en batch {n_batch}: {e}")
-            print("Columnas:", df.columns.tolist())
-            print("Tipos:\n", df.dtypes)
-            print("Primer registro:", df.iloc[0].to_dict())
-
 
     return subidos
 
