@@ -1,679 +1,857 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard de Ventas</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'edu-primary': '#1e3a5f',
-            'edu-secondary': '#2c5282',
-            'edu-accent': '#3182ce',
-            'edu-light': '#e2e8f0',
-            'edu-bg': '#f8fafc',
-            'edu-card': '#ffffff',
-            'edu-text': '#1a202c',
-            'edu-muted': '#64748b',
-            'edu-border': '#cbd5e1',
-            'edu-success': '#059669',
-            'edu-error': '#dc2626',
-          }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Administrador CompStore</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0058be; --on-primary: #ffffff; --primary-container: #2170e4;
+            --secondary: #4648d4; --tertiary: #6b38d4; --tertiary-container: #8455ef;
+            --surface: #f8f9ff; --on-surface: #0b1c30; --surface-variant: #d3e4fe;
+            --on-surface-variant: #424754; --surface-container-lowest: #ffffff;
+            --surface-container-low: #eff4ff; --surface-container: #e5eeff;
+            --surface-container-high: #dce9ff; --surface-container-highest: #d3e4fe;
+            --outline: #727785; --outline-variant: #c2c6d6; --error: #ba1a1a; --success: #059669;
         }
-      }
-    }
-  </script>
-  <style>
-    body { 
-      background: #f1f5f9; 
-      color: #1a202c; 
-      font-family: 'Segoe UI', ui-sans-serif, system-ui, sans-serif; 
-    }
-    ::-webkit-scrollbar { width: 6px; } 
-    ::-webkit-scrollbar-track { background: #e2e8f0; }
-    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
-    .edu-shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); }
-    .edu-shadow-hover { box-shadow: 0 4px 6px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06); }
-    .month-btn {
-      transition: all 0.2s ease;
-    }
-    .month-btn.active {
-      background-color: #3182ce;
-      color: white;
-      border-color: #3182ce;
-    }
-    .month-btn:hover:not(.active) {
-      background-color: #e2e8f0;
-    }
-    .data-table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    .data-table th {
-      background: #f8fafc;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #64748b;
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 2px solid #e2e8f0;
-    }
-    .data-table td {
-      font-size: 13px;
-      padding: 10px 12px;
-      border-bottom: 1px solid #f1f5f9;
-      color: #1a202c;
-    }
-    .data-table tr:hover td {
-      background: #f8fafc;
-    }
-    .data-table tr:last-child td {
-      border-bottom: none;
-    }
-  </style>
-<base target="_blank">
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--surface); color: var(--on-surface); height: 100%; display: flex; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; top: 0; left: 0; background: var(--surface-container-lowest); border-right: 1px solid var(--outline-variant); display: flex; flex-direction: column; z-index: 50; }
+        .main-content { margin-left: 260px; min-height: 100vh; display: flex; flex-direction: column; flex: 1; }
+        .sidebar-header { padding: 32px 24px; display: flex; align-items: center; gap: 12px; }
+        .sidebar-logo { background: var(--primary); padding: 6px; border-radius: 8px; color: white; display: flex; }
+        .sidebar-title { font-size: 24px; font-weight: 600; color: var(--primary); letter-spacing: -0.01em; }
+        .sidebar-subtitle { font-size: 12px; color: var(--on-surface-variant); letter-spacing: 0.05em; font-weight: 500; margin-left: 44px; margin-top: 4px; }
+        .sidebar-nav { flex: 1; padding: 0 12px; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item { display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 8px; color: var(--on-surface-variant); text-decoration: none; cursor: pointer; transition: all 0.2s ease; font-size: 14px; }
+        .nav-item:hover { background: var(--surface-container); }
+        .nav-item .material-symbols-outlined { margin-right: 12px; font-size: 20px; transition: transform 0.2s; }
+        .nav-item:hover .material-symbols-outlined { transform: scale(1.1); }
+        .nav-item.active { background: var(--surface-container-high); color: var(--primary); font-weight: 500; border-left: 4px solid var(--primary); border-radius: 0 8px 8px 0; }
+        .sidebar-footer { padding: 12px; border-top: 1px solid var(--outline-variant); }
+        .main-header { height: 64px; position: fixed; top: 0; right: 0; width: calc(100% - 260px); background: var(--surface); border-bottom: 1px solid var(--outline-variant); display: flex; align-items: center; justify-content: flex-end; padding: 0 32px; z-index: 40; gap: 16px; }
+        .date-filter-card { display: flex; align-items: center; gap: 16px; background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); padding: 8px 20px; border-radius: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .date-group { display: flex; align-items: center; gap: 8px; }
+        .date-group label { font-size: 13px; font-weight: 600; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: 0.03em; }
+        .date-input { border: 1px solid var(--outline-variant); background: var(--surface-container-low); padding: 6px 12px; border-radius: 8px; font-family: 'Inter'; font-size: 14px; color: var(--on-surface); outline: none; cursor: pointer; }
+        .date-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 88, 190, 0.15); }
+        .separator { width: 1px; height: 24px; background: var(--outline-variant); }
+        .filter-btn { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
+        .filter-apply { background: var(--primary); color: white; }
+        .filter-apply:hover { background: var(--primary-container); }
+        .filter-clear { background: transparent; color: var(--error); border: 1px solid var(--error) !important; }
+        .filter-clear:hover { background: #fef2f2; }
+        .btn-success { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Inter'; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .view-section { display: none; margin-top: 64px; padding: 32px; flex: 1; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden; margin-bottom: 24px; }
+        .card-body { padding: 24px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; }
+        .metric-card { transition: transform 0.3s, box-shadow 0.3s; }
+        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .metric-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .metric-label { font-size: 14px; color: var(--on-surface-variant); font-weight: 500; }
+        .metric-icon { padding: 8px; border-radius: 8px; background: var(--surface-container-low); display: flex; transition: all 0.3s; }
+        .metric-card:hover .metric-icon.payments { background: var(--primary); color: white; }
+        .metric-card:hover .metric-icon.inventory { background: var(--tertiary-container); color: white; }
+        .metric-card:hover .metric-icon.shipping { background: #f97316; color: white; }
+        .metric-card:hover .metric-icon.alert { background: var(--error); color: white; }
+        .metric-value { font-size: 32px; font-weight: 700; line-height: 40px; }
+        .sync-text { font-size: 12px; color: var(--on-surface-variant); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 32px; }
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .data-table th { text-align: left; padding: 12px 16px; background: var(--surface-container-low); color: var(--on-surface-variant); font-weight: 600; border-bottom: 1px solid var(--outline-variant); white-space: nowrap; }
+        .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--outline-variant); color: var(--on-surface); white-space: nowrap; }
+        .data-table tr:hover td { background: var(--surface-container-low); }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .badge-success { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        .badge-warning { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+        .badge-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .badge-info { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+        .table-footer { padding: 12px 16px; background: var(--surface-container-low); font-size: 12px; color: var(--on-surface-variant); border-top: 1px solid var(--outline-variant); }
+        
+        .table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+        .toolbar-actions { display: flex; gap: 12px; }
+        .input-select { height: 40px; padding: 0 12px; border: 1px solid var(--outline-variant); border-radius: 8px; font-family: 'Inter'; font-size: 14px; background: var(--surface-container-lowest); color: var(--on-surface); outline: none; cursor: pointer; }
+        .input-search { height: 40px; width: 250px; padding: 0 12px 0 40px; border: 1px solid var(--outline-variant); border-radius: 8px; font-family: 'Inter'; font-size: 14px; background: var(--surface-container-lowest); color: var(--on-surface); outline: none; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper .material-symbols-outlined { position: absolute; left: 12px; color: var(--on-surface-variant); }
+
+        .config-container { max-width: 700px; margin: 0 auto; }
+        .status-indicator { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; margin-top: 8px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-disconnected { background-color: #fef2f2; color: var(--error); }
+        .status-disconnected .status-dot { background-color: var(--error); }
+        .status-connected { background-color: #ecfdf5; color: var(--success); }
+        .status-connected .status-dot { background-color: var(--success); animation: pulse 2s infinite; }
+        .form-group { margin-bottom: 24px; }
+        .form-label { display: block; font-size: 12px; color: var(--on-surface-variant); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .form-input-wrapper { position: relative; }
+        .form-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--on-surface-variant); }
+        .form-input { width: 100%; height: 44px; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: 8px; padding: 0 16px 0 40px; font-family: 'Inter'; font-size: 14px; color: var(--on-surface); outline: none; }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 88, 190, 0.2); }
+        .form-actions { display: flex; gap: 16px; padding-top: 24px; border-top: 1px solid var(--outline-variant); margin-top: 32px; }
+        .btn-primary { background: var(--primary); color: var(--on-primary); border: none; padding: 10px 20px; border-radius: 8px; font-family: 'Inter'; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .btn-outline { background: var(--surface-container-low); border: 1px solid var(--outline-variant); color: var(--on-surface-variant); padding: 10px 20px; border-radius: 8px; font-family: 'Inter'; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        
+        .tabs-header { display: flex; gap: 0; border-bottom: 1px solid var(--outline-variant); margin-bottom: 24px; }
+        .tab-btn { padding: 12px 24px; font-size: 14px; font-weight: 600; cursor: pointer; background: transparent; border: none; border-bottom: 3px solid transparent; color: var(--on-surface-variant); transition: all 0.2s; }
+        .tab-btn:hover { background: var(--surface-container-low); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        
+        .main-footer { padding: 24px 32px; border-top: 1px solid rgba(195, 198, 214, 0.3); display: flex; justify-content: space-between; font-size: 12px; color: var(--on-surface-variant); margin-top: auto; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); } 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-  <!-- Header Académico -->
-  <header class="bg-edu-primary border-b border-edu-secondary px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-        </svg>
-      </div>
-      <div>
-        <h1 class="text-base font-semibold text-white">Dashboard de Ventas</h1>
-        <p class="text-xs text-blue-200 mt-0.5">Optimización del Análisis de Datos · Empresa Ensigna</p>
-      </div>
+<aside class="sidebar">
+    <div>
+        <div class="sidebar-header"><div class="sidebar-logo"><span class="material-symbols-outlined">inventory_2</span></div><h1 class="sidebar-title">CompStore</h1></div>
+        <div class="sidebar-subtitle">Portal Administrador</div>
     </div>
-    <div class="flex items-center gap-3">
-      <span id="badge" class="text-xs px-3 py-1 rounded-full bg-white/10 text-blue-200 border border-white/20">
-        Sin conectar
-      </span>
-      <div class="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
-        <svg class="w-4 h-4 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-        </svg>
-      </div>
-    </div>
-  </header>
+    <nav class="sidebar-nav" style="margin-top: 16px;">
+        <a class="nav-item active" data-view="dashboard"><span class="material-symbols-outlined">dashboard</span>Panel Principal</a>
+        <a class="nav-item" data-view="distribuidoras"><span class="material-symbols-outlined">store</span>Distribuidoras</a>
+        <a class="nav-item" data-view="ventas-vendedor"><span class="material-symbols-outlined">point_of_sale</span>Ventas Vendedor</a>
+        <a class="nav-item" data-view="tablas"><span class="material-symbols-outlined">table_chart</span>Tablas</a>
+    </nav>
+    <div class="sidebar-footer"><a class="nav-item" data-view="settings"><span class="material-symbols-outlined">settings</span>Configuración</a></div>
+</aside>
 
-  <main class="max-w-6xl mx-auto px-6 py-8 space-y-8">
-
-    <!-- Credenciales -->
-    <section id="cred-section" class="bg-edu-card border border-edu-border rounded-xl p-6 space-y-4 edu-shadow">
-      <div class="flex items-center gap-2 mb-2">
-        <svg class="w-5 h-5 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-        </svg>
-        <h2 class="text-sm font-semibold text-edu-text">Configuración de Conexión</h2>
-      </div>
-      <p class="text-sm text-edu-muted">Ingrese las credenciales de su proyecto Supabase para cargar los datos de ventas.</p>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="space-y-1">
-          <label class="text-xs font-medium text-edu-text">URL del Proyecto</label>
-          <input id="inp-url" type="text" placeholder="https://xxxx.supabase.co"
-            class="w-full bg-slate-50 border border-edu-border rounded-lg px-3 py-2.5 text-sm text-edu-text placeholder-slate-400 focus:outline-none focus:border-edu-accent focus:ring-2 focus:ring-blue-100 transition-all" />
+<main class="main-content">
+    <header class="main-header">
+        <div class="date-filter-card">
+            <span class="material-symbols-outlined text-primary" style="font-size: 22px;">calendar_month</span>
+            <div class="date-group"><label for="filter-start">Desde</label><input type="date" id="filter-start" class="date-input"></div>
+            <div class="separator"></div>
+            <div class="date-group"><label for="filter-end">Hasta</label><input type="date" id="filter-end" class="date-input"></div>
+            <button class="filter-btn filter-apply" onclick="applyFilter()"><span class="material-symbols-outlined" style="font-size: 16px;">check</span> Aplicar</button>
+            <button class="filter-btn filter-clear" onclick="clearFilter()"><span class="material-symbols-outlined" style="font-size: 16px;">close</span></button>
         </div>
-        <div class="space-y-1">
-          <label class="text-xs font-medium text-edu-text">API Key (Publishable)</label>
-          <input id="inp-key" type="password" placeholder="eyJhbGciOiJIUzI1NiIs..."
-            class="w-full bg-slate-50 border border-edu-border rounded-lg px-3 py-2.5 text-sm text-edu-text placeholder-slate-400 focus:outline-none focus:border-edu-accent focus:ring-2 focus:ring-blue-100 transition-all" />
+        <button class="btn-success" id="download-xlsm-btn"><span class="material-symbols-outlined" style="font-size: 18px;">download</span>Descargar XLSM</button>
+    </header>
+
+    <section id="dashboard" class="view-section active">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px;">
+            <div><p style="font-size: 12px; color: var(--on-surface-variant); letter-spacing: 0.05em; font-weight: 600; margin-bottom: 4px;">ANÁLITICAS COMPSTORE</p><h2 style="font-size: 32px; font-weight: 700;">Resumen del Negocio</h2><div class="sync-text" id="sync-status"><span class="material-symbols-outlined" style="font-size: 14px;">cloud_off</span> Sin conexión</div></div>
         </div>
-      </div>
-
-      <div class="flex items-center gap-3 pt-2">
-        <button onclick="cargar()"
-          class="bg-edu-accent hover:bg-edu-secondary text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors edu-shadow">
-          Conectar
-        </button>
-        <button onclick="limpiar()"
-          class="text-sm text-edu-muted hover:text-edu-text px-3 py-2.5 rounded-lg transition-colors">
-          Limpiar
-        </button>
-      </div>
-
-      <div id="err-box" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-        <svg class="w-4 h-4 text-edu-error mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        <p id="err" class="text-xs text-edu-error"></p>
-      </div>
+        <div class="metrics-grid">
+            <div class="card metric-card"><div class="card-body"><div class="metric-header"><span class="metric-label">VENTAS TOTALES</span><div class="metric-icon payments"><span class="material-symbols-outlined" style="color: var(--primary);">payments</span></div></div><h3 class="metric-value" id="m-sales">$ 0</h3></div></div>
+            <div class="card metric-card"><div class="card-body"><div class="metric-header"><span class="metric-label">UNIDADES VENDIDAS</span><div class="metric-icon inventory"><span class="material-symbols-outlined" style="color: var(--tertiary-container);">inventory</span></div></div><h3 class="metric-value" id="m-units">0</h3></div></div>
+            <div class="card metric-card"><div class="card-body"><div class="metric-header"><span class="metric-label">PRODUCTO MÁS VENDIDO</span><div class="metric-icon shipping"><span class="material-symbols-outlined" style="color: #f97316;">trending_up</span></div></div><h3 class="metric-value" id="m-top-product" style="font-size: 20px; height: 40px; display:flex; align-items:center;">-</h3></div></div>
+        </div>
+        <div class="charts-grid">
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Tendencia de Ventas</h3><div class="chart-container"><canvas id="chart-line"></canvas></div></div></div>
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Distribución por Categoría</h3><div class="chart-container"><canvas id="chart-doughnut"></canvas></div></div></div>
+        </div>
+        <div class="charts-grid">
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Rendimiento por Vendedor</h3><div class="chart-container"><canvas id="chart-vendedor"></canvas></div></div></div>
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Top 5 Productos Más Vendidos</h3><div class="chart-container"><canvas id="chart-top-products"></canvas></div></div></div>
+        </div>
     </section>
 
-    <!-- Selector de Meses -->
-    <section id="month-section" class="hidden">
-      <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow">
-        <div class="flex items-center gap-2 mb-4">
-          <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          <p class="text-sm font-semibold text-edu-text">Filtrar por Período</p>
+    <section id="distribuidoras" class="view-section">
+        <h2 style="font-size: 32px; font-weight: 700; margin-bottom: 24px;">Distribución y Logística</h2>
+        <div class="charts-grid">
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Ventas por Sucursal</h3><div class="chart-container"><canvas id="chart-sucursal"></canvas></div></div></div>
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Distribución por Proveedor</h3><div class="chart-container"><canvas id="chart-proveedor"></canvas></div></div></div>
         </div>
-        <div class="flex flex-wrap gap-2" id="month-buttons">
-          <!-- Botones de meses se generan dinámicamente -->
-        </div>
-        <div class="flex items-center gap-3 mt-4 pt-3 border-t border-edu-border">
-          <button id="btn-all" onclick="filtrarMes('all')" class="month-btn active text-xs px-3 py-1.5 rounded-md border border-edu-border text-edu-muted font-medium">
-            Todo el período
-          </button>
-          <p id="periodo-actual" class="text-xs text-edu-muted">Mostrando todos los registros</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Métricas -->
-    <section id="metrics-section" class="hidden">
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Ventas Totales</p>
-            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
+        <div class="card">
+            <div class="card-body">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Tabla de Ciudades</h3>
+                <div style="overflow-x: auto; padding:0;"><table class="data-table" id="table-ciudad"></table></div>
             </div>
-          </div>
-          <p class="text-2xl font-bold text-edu-text" id="m1">—</p>
-          <p class="text-xs text-edu-muted mt-1">Registros procesados</p>
         </div>
-
-        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Ingresos</p>
-            <div class="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-edu-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-          </div>
-          <p class="text-2xl font-bold text-edu-text" id="m2">—</p>
-          <p class="text-xs text-edu-muted mt-1">Total acumulado</p>
-        </div>
-
-        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Productos</p>
-            <div class="w-8 h-8 bg-purple-50 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-              </svg>
-            </div>
-          </div>
-          <p class="text-2xl font-bold text-edu-text" id="m3">—</p>
-          <p class="text-xs text-edu-muted mt-1">Diferentes SKU</p>
-        </div>
-
-        <div class="bg-edu-card border border-edu-border rounded-xl p-5 edu-shadow hover:edu-shadow-hover transition-shadow">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-medium text-edu-muted uppercase tracking-wide">Sucursales</p>
-            <div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
-              <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-            </div>
-          </div>
-          <p class="text-2xl font-bold text-edu-text" id="m4">—</p>
-          <p class="text-xs text-edu-muted mt-1">Puntos de venta</p>
-        </div>
-      </div>
     </section>
 
-    <!-- Gráficos -->
-    <section id="charts-section" class="hidden space-y-4">
-
-      <!-- Ingresos por mes -->
-      <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
-        <div class="flex items-center gap-2 mb-4">
-          <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
-          </svg>
-          <p class="text-sm font-semibold text-edu-text">Ingresos por Mes</p>
+    <section id="ventas-vendedor" class="view-section">
+        <div class="table-toolbar">
+            <h2 style="font-size: 32px; font-weight: 700; margin: 0;">Ventas por Vendedor</h2>
+            <div class="toolbar-actions">
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="search-vendedor" class="input-search" placeholder="Buscar vendedor..." oninput="renderVentasVendedor()">
+                </div>
+                <select id="sort-vendedor" class="input-select" onchange="renderVentasVendedor()">
+                    <option value="desc">Más reciente primero</option>
+                    <option value="asc">Más antiguo primero</option>
+                </select>
+            </div>
         </div>
-        <div style="position:relative; height:220px;">
-          <canvas id="c-mes" role="img" aria-label="Ingresos por mes">Cargando...</canvas>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        <!-- Top productos -->
-        <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
-          <div class="flex items-center gap-2 mb-4">
-            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-            </svg>
-            <p class="text-sm font-semibold text-edu-text">Top 5 Productos</p>
-          </div>
-          <div style="position:relative; height:200px;">
-            <canvas id="c-prod" role="img" aria-label="Top 5 productos">Cargando...</canvas>
-          </div>
-        </div>
-
-        <!-- Tipo de pago -->
-        <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
-          <div class="flex items-center gap-2 mb-4">
-            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-            </svg>
-            <p class="text-sm font-semibold text-edu-text">Tipo de Pago</p>
-          </div>
-          <div style="position:relative; height:200px;">
-            <canvas id="c-pago" role="img" aria-label="Tipo de pago">Cargando...</canvas>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Top sucursales -->
-      <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
-        <div class="flex items-center gap-2 mb-4">
-          <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          <p class="text-sm font-semibold text-edu-text">Top 5 Sucursales por Ingresos</p>
-        </div>
-        <div style="position:relative; height:200px;">
-          <canvas id="c-suc" role="img" aria-label="Top sucursales">Cargando...</canvas>
-        </div>
-      </div>
-
+        <div class="card"><div class="card-body" style="overflow-x: auto; padding:0;"><table class="data-table" id="table-ventas-vendedor"></table></div></div>
     </section>
 
-    <!-- Tabla de Datos Crudos -->
-    <section id="data-section" class="hidden">
-      <div class="bg-edu-card border border-edu-border rounded-xl p-6 edu-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-edu-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-            <p class="text-sm font-semibold text-edu-text">Registros de Ventas</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <span id="data-count" class="text-xs text-edu-muted bg-slate-100 px-2 py-1 rounded-md">0 registros</span>
-            <button onclick="descargarCSV()" class="text-xs text-edu-accent hover:text-edu-secondary font-medium px-3 py-1.5 rounded-md border border-edu-border hover:bg-slate-50 transition-colors flex items-center gap-1">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-              </svg>
-              CSV
-            </button>
-          </div>
+    <section id="tablas" class="view-section">
+        <div class="table-toolbar">
+            <h2 style="font-size: 32px; font-weight: 700; margin: 0;">Datos Maestros</h2>
+            <div class="toolbar-actions">
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="search-tablas" class="input-search" placeholder="Buscar en tabla..." oninput="renderTablas()">
+                </div>
+                <select id="sort-tablas" class="input-select" onchange="renderTablas()">
+                    <option value="desc">Más reciente primero</option>
+                    <option value="asc">Más antiguo primero</option>
+                    <option value="az">Nombre A-Z</option>
+                    <option value="za">Nombre Z-A</option>
+                </select>
+            </div>
         </div>
-        <div class="overflow-x-auto rounded-lg border border-edu-border">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Producto</th>
-                <th>Sucursal</th>
-                <th>Tipo Pago</th>
-                <th>Cantidad</th>
-                <th>Precio Unit.</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody id="data-tbody">
-              <!-- Filas generadas dinámicamente -->
-            </tbody>
-          </table>
+
+        <div class="charts-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 24px;">
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Productos por Categoría</h3><div class="chart-container" style="height: 250px;"><canvas id="chart-prod-tipo-line"></canvas></div></div></div>
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Ventas por Región</h3><div class="chart-container" style="height: 250px;"><canvas id="chart-region"></canvas></div></div></div>
+            <div class="card"><div class="card-body"><h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">Ventas por Ciudad</h3><div class="chart-container" style="height: 250px;"><canvas id="chart-ciudad"></canvas></div></div></div>
         </div>
-        <div class="flex items-center justify-between mt-3">
-          <p class="text-xs text-edu-muted">Mostrando máximo 100 registros del filtro actual</p>
-          <div class="flex items-center gap-2">
-            <button onclick="cambiarPagina(-1)" id="btn-prev" class="text-xs px-2 py-1 rounded border border-edu-border text-edu-muted hover:bg-slate-50 disabled:opacity-40">
-              ← Anterior
-            </button>
-            <span id="page-info" class="text-xs text-edu-muted">Página 1</span>
-            <button onclick="cambiarPagina(1)" id="btn-next" class="text-xs px-2 py-1 rounded border border-edu-border text-edu-muted hover:bg-slate-50 disabled:opacity-40">
-              Siguiente →
-            </button>
-          </div>
+
+        <div class="card">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="table-clientes" onclick="switchTab('table-clientes', this)">Clientes</button>
+                <button class="tab-btn" data-tab="table-productos" onclick="switchTab('table-productos', this)">Productos</button>
+                <button class="tab-btn" data-tab="table-vendedores" onclick="switchTab('table-vendedores', this)">Vendedores</button>
+            </div>
+            <div id="table-clientes" class="tab-content" style="overflow-x: auto; padding:0;"><table class="data-table" id="table-clientes-data"></table></div>
+            <div id="table-productos" class="tab-content" style="display:none; overflow-x: auto; padding:0;"><table class="data-table" id="table-productos-data"></table></div>
+            <div id="table-vendedores" class="tab-content" style="display:none; overflow-x: auto; padding:0;"><table class="data-table" id="table-vendedores-data"></table></div>
         </div>
-      </div>
     </section>
 
-    <!-- Footer -->
-    <div class="border-t border-edu-border pt-4 pb-2">
-      <p id="st" class="text-xs text-edu-muted text-center">Ingrese sus credenciales de Supabase para comenzar el análisis.</p>
-    </div>
+    <section id="settings" class="view-section">
+        <div style="margin-bottom: 32px;"><p style="font-size: 12px; color: var(--on-surface-variant); font-weight: 600; margin-bottom: 4px;">ADMINISTRACIÓN</p><h2 style="font-size: 32px; font-weight: 700;">Configuración</h2></div>
+        <div class="config-container"><div class="card" style="margin-bottom: 0;"><div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;"><div><div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;"><span class="material-symbols-outlined" style="color: var(--primary); font-size: 28px;">cloud</span><h3 style="font-size: 20px; font-weight: 600;">Conexión a Supabase</h3></div><p style="font-size: 14px; color: var(--on-surface-variant);">Introduce tus credenciales.</p><div id="connection-status" class="status-indicator status-disconnected"><span class="status-dot"></span><span class="status-text">Desconectado</span></div></div></div>
+            <form id="supabase-form">
+                <div class="form-group"><label class="form-label">URL del Proyecto</label><div class="form-input-wrapper"><span class="material-symbols-outlined form-icon">link</span><input type="url" id="supa-url" class="form-input" placeholder="https://tuproyecto.supabase.co" required></div></div>
+                <div class="form-group"><label class="form-label">Publishable API Key</label><div class="form-input-wrapper"><span class="material-symbols-outlined form-icon">key</span><input type="password" id="supa-key" class="form-input" placeholder="sb_publishable_... o eyJ..." required></div></div>
+                <div class="form-actions"><button type="submit" class="btn-primary"><span class="material-symbols-outlined" style="font-size: 18px;">save</span>Conectar</button><button type="button" id="test-connection-btn" class="btn-outline"><span class="material-symbols-outlined" style="font-size: 18px;">wifi_tethering</span>Probar</button></div>
+            </form>
+        </div></div></div>
+    </section>
+    <footer class="main-footer"><p>© 2024 CompStore. Todos los derechos reservados.</p></footer>
+</main>
 
-  </main>
+<script>
+    let SUPA_URL = ''; let SUPA_KEY = ''; let FILTER_START = ''; let FILTER_END = '';
+    let dataCache = { ventas: null, ventasVendedor: null, productos: null, clientes: null, vendedores: null, categorias: null, regiones: null, ciudades: null, sucursales: null, proveedores: null };
+    let chartInstances = { line: null, doughnut: null, vendedor: null, topProducts: null, region: null, ciudad: null, sucursal: null, proveedor: null, prodTipoLine: null };
 
-  <script>
-    const PAL = ['#3182ce','#38a169','#dd6b20','#805ad5','#e53e3e','#00b5d8','#d69e2e'];
-    const TICK = { font: { size: 11, family: "'Segoe UI', sans-serif" }, color: '#64748b' };
-    const GRID = { color: 'rgba(100,116,139,0.08)' };
-    let cx = {};
-    let datosCrudos = [];
-    let productosMap = {};
-    let sucursalesMap = {};
-    let mesesDisponibles = [];
-    let mesSeleccionado = 'all';
-    let paginaActual = 1;
-    const REGISTROS_POR_PAGINA = 100;
+    const navItems = document.querySelectorAll('.nav-item'); const views = document.querySelectorAll('.view-section');
+    navItems.forEach(item => { item.addEventListener('click', () => { navItems.forEach(nav => nav.classList.remove('active')); views.forEach(view => view.classList.remove('active')); item.classList.add('active'); document.getElementById(item.getAttribute('data-view')).classList.add('active'); }); });
 
-    const NOMBRES_MESES = {
-      '01': 'Ene', '02': 'Feb', '03': 'Mar', '04': 'Abr',
-      '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Ago',
-      '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dic'
+    const testBtn = document.getElementById('test-connection-btn'); const form = document.getElementById('supabase-form'); const statusIndicator = document.getElementById('connection-status');
+    const setConnectionStatus = (isConnected, text) => { statusIndicator.className = `status-indicator ${isConnected ? 'status-connected' : 'status-disconnected'}`; statusIndicator.querySelector('.status-text').textContent = text; };
+    const cleanSupabaseUrl = (url) => { url = url.replace(/\/+$/, ''); if (url.endsWith('/rest/v1')) url = url.slice(0, -8); return url; };
+    const buildSupabaseHeaders = (key) => { const headers = { 'apikey': key, 'Accept': 'application/json' }; if (key.startsWith('eyJ')) headers['Authorization'] = `Bearer ${key}`; return headers; };
+
+    const testConnection = async (showAlerts = true) => {
+        let rawUrl = document.getElementById('supa-url').value.trim(); const key = document.getElementById('supa-key').value.trim();
+        if(!rawUrl || !key) { if(showAlerts) alert("Por favor ingresa la URL y la API Key."); return false; }
+        const url = cleanSupabaseUrl(rawUrl); const headers = buildSupabaseHeaders(key);
+        testBtn.disabled = true; testBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px; animation: spin 1s linear infinite;">progress_activity</span> Conectando...`; setConnectionStatus(false, "Conectando...");
+        try {
+            const response = await fetch(`${url}/rest/v1/ciudad?limit=1`, { method: 'GET', headers: headers });
+            if(response.ok || response.status === 200 || response.status === 206) {
+                SUPA_URL = url; SUPA_KEY = key; setConnectionStatus(true, "Conectado"); testBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span> ¡Éxito!`; testBtn.style.color = '#059669'; testBtn.style.background = '#ecfdf5';
+                document.getElementById('sync-status').innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px;">cloud_done</span> Sincronizado: ${new Date().toLocaleTimeString('es-CL')}`;
+                await fetchAllData(); applyFilter(); return true;
+            } else { throw new Error("Error: Credenciales incorrectas."); }
+        } catch (error) { console.error(error); setConnectionStatus(false, "Error"); testBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">cancel</span> Fallido`; if(showAlerts) alert("Error:\n\n" + error.message); return false; }
+        finally { setTimeout(() => { testBtn.disabled = false; testBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">wifi_tethering</span>Probar`; testBtn.style.color = ''; testBtn.style.background = ''; }, 4000); }
+    };
+    if(testBtn) testBtn.addEventListener('click', () => testConnection(true));
+    if(form) form.addEventListener('submit', async (e) => { e.preventDefault(); await testConnection(true); });
+
+    async function supabaseFetch(table, query = '') { try { const res = await fetch(`${SUPA_URL}/rest/v1/${table}${query}`, { headers: buildSupabaseHeaders(SUPA_KEY) }); if (!res.ok) throw new Error(); return await res.json(); } catch (e) { return null; } }
+
+    const formatCLP = (num) => new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(num);
+    const formatRUT = (rut) => {
+        if (!rut) return '-';
+        let str = rut.toString().replace(/\s/g, '').toUpperCase();
+        if (str.includes('-')) {
+            let parts = str.split('-');
+            let num = parts[0].replace(/\D/g, '');
+            let dv = parts[1];
+            if (!/^[0-9K]+$/.test(dv)) return str;
+            num = num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return `${num}-${dv}`;
+        } else {
+            if (str.length < 2) return str;
+            let dv = str.slice(-1);
+            let num = str.slice(0, -1).replace(/\D/g, '');
+            if (!/^[0-9K]+$/.test(dv)) return str;
+            num = num.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return `${num}-${dv}`;
+        }
+    };
+    
+    const findNumKey = (obj) => { if (!obj) return null; return Object.keys(obj).find(k => typeof obj[k] === 'number' && !k.toLowerCase().includes('id')); };
+    const findTextKey = (obj) => {
+        if (!obj) return null;
+        const keys = Object.keys(obj);
+        let key = keys.find(k => typeof obj[k] === 'string' && ['nombre', 'name', 'nom', 'descripcion', 'nombres', 'tipo', 'categoria'].includes(k.toLowerCase()));
+        if(key) return key;
+        key = keys.find(k => typeof obj[k] === 'string' && (k.toLowerCase().includes('nom') || k.toLowerCase().includes('name') || k.toLowerCase().includes('desc')));
+        if(key) return key;
+        key = keys.find(k => typeof obj[k] === 'string' && !k.toLowerCase().includes('id') && !k.toLowerCase().includes('fecha') && !k.toLowerCase().includes('_at') && !k.toLowerCase().includes('estado'));
+        return key;
+    };
+    
+    // Función inteligente para unir Nombre + Apellido
+    const getDisplayName = (obj) => {
+        if (!obj) return 'Sin Nombre';
+        let name = '';
+        let last = '';
+        for (let k in obj) {
+            let lk = k.toLowerCase();
+            if (lk === 'nombre' || lk === 'nombres' || lk === 'nom_vend' || lk === 'nombre_vendedor') name = obj[k];
+            if (lk === 'apellido' || lk === 'apellidos' || lk === 'ape_vend' || lk === 'apellido_vendedor') last = obj[k];
+        }
+        if (name || last) return `${name} ${last}`.trim();
+        
+        let tk = findTextKey(obj);
+        return tk ? (obj[tk] || 'Sin Nombre') : 'Sin Nombre';
     };
 
-    function formatearMes(key) {
-      const [anio, mes] = key.split('-');
-      return `${NOMBRES_MESES[mes]} ${anio}`;
-    }
+    const findDateKey = (obj) => { if (!obj) return null; return Object.keys(obj).find(k => k.toLowerCase().includes('fecha') || k.toLowerCase().includes('date') || k.toLowerCase().includes('_at')); };
+    
+    // Helper para encontrar la clave primaria de una tabla objetivo
+    const findPrimaryKey = (obj) => {
+        if (!obj) return 'id';
+        const keys = Object.keys(obj);
+        let pk = keys.find(k => k.toLowerCase() === 'id');
+        if(pk) return pk;
+        pk = keys.find(k => k.toLowerCase().startsWith('id_'));
+        if(pk) return pk;
+        pk = keys.find(k => k.toLowerCase() === 'rut');
+        if(pk) return pk;
+        pk = keys.find(k => k.toLowerCase().startsWith('cod_'));
+        if(pk) return pk;
+        return keys[0];
+    };
 
-    function fmt(n) {
-      if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
-      if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
-      if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
-      return '$' + Math.round(n);
-    }
-
-    function formatearFecha(fechaStr) {
-      if (!fechaStr) return '-';
-      const d = new Date(fechaStr);
-      if (isNaN(d)) return fechaStr;
-      return d.toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-
-    function bar(id, labels, data, color, horizontal) {
-      if (cx[id]) cx[id].destroy();
-      cx[id] = new Chart(document.getElementById(id), {
-        type: 'bar',
-        data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 4, borderSkipped: false }] },
-        options: {
-          indexAxis: horizontal ? 'y' : 'x',
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: GRID, ticks: { ...TICK, maxRotation: horizontal ? 0 : 40, autoSkip: false } },
-            y: { grid: GRID, ticks: { ...TICK, callback: v => horizontal ? v : fmt(v) } }
-          }
-        }
-      });
-    }
-
-    function donut(id, labels, data) {
-      if (cx[id]) cx[id].destroy();
-      cx[id] = new Chart(document.getElementById(id), {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data, backgroundColor: PAL.slice(0, data.length), borderWidth: 0 }] },
-        options: {
-          responsive: true, maintainAspectRatio: false, cutout: '65%',
-          plugins: { legend: { position: 'right', labels: { font: { size: 11, family: "'Segoe UI', sans-serif" }, color: '#64748b', boxWidth: 10, boxHeight: 10 } } }
-        }
-      });
-    }
-
-    function generarBotonesMeses() {
-      const container = document.getElementById('month-buttons');
-      container.innerHTML = '';
-
-      mesesDisponibles.forEach(mesKey => {
-        const btn = document.createElement('button');
-        btn.className = 'month-btn text-xs px-3 py-1.5 rounded-md border border-edu-border text-edu-muted font-medium';
-        btn.textContent = formatearMes(mesKey);
-        btn.onclick = () => filtrarMes(mesKey);
-        btn.dataset.mes = mesKey;
-        container.appendChild(btn);
-      });
-    }
-
-    function filtrarMes(mesKey) {
-      mesSeleccionado = mesKey;
-      paginaActual = 1;
-
-      document.querySelectorAll('.month-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
-
-      if (mesKey === 'all') {
-        document.getElementById('btn-all').classList.add('active');
-        document.getElementById('periodo-actual').textContent = 'Mostrando todos los registros';
-      } else {
-        const btn = document.querySelector(`[data-mes="${mesKey}"]`);
-        if (btn) btn.classList.add('active');
-        document.getElementById('periodo-actual').textContent = `Período: ${formatearMes(mesKey)}`;
-      }
-
-      actualizarDashboard();
-    }
-
-    function obtenerDatosFiltrados() {
-      if (mesSeleccionado === 'all') {
-        return datosCrudos;
-      }
-      return datosCrudos.filter(r => r.fechaventa?.slice(0, 7) === mesSeleccionado);
-    }
-
-    function actualizarTabla() {
-      const v = obtenerDatosFiltrados();
-      const totalRegistros = v.length;
-
-      document.getElementById('data-count').textContent = `${totalRegistros.toLocaleString('es-CL')} registros`;
-
-      const inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
-      const fin = inicio + REGISTROS_POR_PAGINA;
-      const paginaDatos = v.slice(inicio, fin);
-
-      const tbody = document.getElementById('data-tbody');
-      tbody.innerHTML = '';
-
-      if (paginaDatos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-edu-muted py-8">No hay registros para mostrar</td></tr>';
-      } else {
-        paginaDatos.forEach(r => {
-          const total = r.cantidad * r.precio;
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${formatearFecha(r.fechaventa)}</td>
-            <td>${productosMap[r.idproducto] || '#' + r.idproducto}</td>
-            <td>${sucursalesMap[r.idsucursal] || 'Suc. ' + r.idsucursal}</td>
-            <td><span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">${r.tipopago || '-'}</span></td>
-            <td class="text-right">${r.cantidad}</td>
-            <td class="text-right">$${r.precio?.toLocaleString('es-CL') || '0'}</td>
-            <td class="text-right font-medium">$${total.toLocaleString('es-CL')}</td>
-          `;
-          tbody.appendChild(row);
+    const findForeignKey = (obj, targets) => {
+        if (!obj) return null;
+        const keys = Object.keys(obj);
+        const targArr = Array.isArray(targets) ? targets : [targets];
+        let key = keys.find(k => targArr.includes(k.toLowerCase()));
+        if(key) return key;
+        key = keys.find(k => {
+            let lk = k.toLowerCase();
+            return (lk.startsWith('id_') || lk.endsWith('_id') || lk.startsWith('cod_')) && targArr.some(t => lk.includes(t));
         });
-      }
-
-      // Actualizar paginación
-      const totalPaginas = Math.ceil(totalRegistros / REGISTROS_POR_PAGINA) || 1;
-      document.getElementById('page-info').textContent = `Página ${paginaActual} de ${totalPaginas}`;
-      document.getElementById('btn-prev').disabled = paginaActual <= 1;
-      document.getElementById('btn-next').disabled = paginaActual >= totalPaginas;
-    }
-
-    function cambiarPagina(delta) {
-      const v = obtenerDatosFiltrados();
-      const totalPaginas = Math.ceil(v.length / REGISTROS_POR_PAGINA) || 1;
-      const nuevaPagina = paginaActual + delta;
-
-      if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas) {
-        paginaActual = nuevaPagina;
-        actualizarTabla();
-      }
-    }
-
-    function descargarCSV() {
-      const v = obtenerDatosFiltrados();
-      let csv = 'Fecha,Producto,Sucursal,Tipo Pago,Cantidad,Precio Unitario,Total\n';
-
-      v.forEach(r => {
-        const total = r.cantidad * r.precio;
-        csv += `${r.fechaventa || ''},${(productosMap[r.idproducto] || '#' + r.idproducto).replace(/,/g, ' ')},${(sucursalesMap[r.idsucursal] || 'Suc. ' + r.idsucursal).replace(/,/g, ' ')},${r.tipopago || ''},${r.cantidad},${r.precio || 0},${total}\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `ventas_${mesSeleccionado === 'all' ? 'todos' : mesSeleccionado}.csv`;
-      link.click();
-    }
-
-    function actualizarDashboard() {
-      const v = obtenerDatosFiltrados();
-
-      if (v.length === 0) {
-        document.getElementById('m1').textContent = '0';
-        document.getElementById('m2').textContent = '$0';
-        document.getElementById('m3').textContent = '0';
-        document.getElementById('m4').textContent = '0';
-      } else {
-        const ingresos = v.reduce((s, r) => s + r.cantidad * r.precio, 0);
-        const productos = new Set(v.map(r => r.idproducto)).size;
-        const sucursales = new Set(v.map(r => r.idsucursal)).size;
-        document.getElementById('m1').textContent = v.length.toLocaleString('es-CL');
-        document.getElementById('m2').textContent = fmt(ingresos);
-        document.getElementById('m3').textContent = productos;
-        document.getElementById('m4').textContent = sucursales;
-      }
-
-      // Ingresos por mes (siempre muestra todos los meses, pero resalta el seleccionado)
-      const mes = {};
-      datosCrudos.forEach(r => {
-        const k = r.fechaventa?.slice(0, 7);
-        if (k) mes[k] = (mes[k] || 0) + r.cantidad * r.precio;
-      });
-      const mk = Object.keys(mes).sort().slice(-12);
-      const coloresMes = mk.map(k => k === mesSeleccionado ? '#3182ce' : '#94a3b8');
-
-      if (cx['c-mes']) cx['c-mes'].destroy();
-      cx['c-mes'] = new Chart(document.getElementById('c-mes'), {
-        type: 'bar',
-        data: { 
-          labels: mk.map(formatearMes), 
-          datasets: [{ data: mk.map(k => Math.round(mes[k])), backgroundColor: coloresMes, borderRadius: 4, borderSkipped: false }] 
-        },
-        options: {
-          indexAxis: 'x',
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: GRID, ticks: { ...TICK, maxRotation: 40, autoSkip: false } },
-            y: { grid: GRID, ticks: { ...TICK, callback: v => fmt(v) } }
-          }
-        }
-      });
-
-      // Top 5 productos (filtrados)
-      const pp = {};
-      v.forEach(r => {
-        const n = (productosMap[r.idproducto] || '#' + r.idproducto).substring(0, 20);
-        pp[n] = (pp[n] || 0) + r.cantidad * r.precio;
-      });
-      const tp = Object.entries(pp).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      bar('c-prod', tp.map(e => e[0]), tp.map(e => Math.round(e[1])), PAL[1], true);
-
-      // Tipo de pago (filtrados)
-      const pg = {};
-      v.forEach(r => { pg[r.tipopago] = (pg[r.tipopago] || 0) + 1; });
-      donut('c-pago', Object.keys(pg), Object.values(pg));
-
-      // Top 5 sucursales (filtradas)
-      const ss = {};
-      v.forEach(r => {
-        const n = (sucursalesMap[r.idsucursal] || 'Suc. ' + r.idsucursal).substring(0, 22);
-        ss[n] = (ss[n] || 0) + r.cantidad * r.precio;
-      });
-      const ts = Object.entries(ss).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      bar('c-suc', ts.map(e => e[0]), ts.map(e => Math.round(e[1])), PAL[2], true);
-
-      // Actualizar tabla
-      actualizarTabla();
-    }
-
-    function limpiar() {
-      document.getElementById('inp-url').value = '';
-      document.getElementById('inp-key').value = '';
-      document.getElementById('err-box').classList.add('hidden');
-    }
-
-    async function cargar() {
-      const url = document.getElementById('inp-url').value.trim();
-      const key = document.getElementById('inp-key').value.trim();
-      const errBox = document.getElementById('err-box');
-      const err = document.getElementById('err');
-      errBox.classList.add('hidden');
-
-      if (!url || !key) {
-        err.textContent = 'Por favor complete ambos campos de conexión.';
-        errBox.classList.remove('hidden');
-        return;
-      }
-
-      document.getElementById('badge').textContent = 'Conectando...';
-      document.getElementById('badge').className = 'text-xs px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200';
-      document.getElementById('st').textContent = 'Estableciendo conexión con la base de datos...';
-
-      try {
-        const db = supabase.createClient(url, key);
-
-        const { data: v, error } = await db
-          .from('ventasdiarias')
-          .select('fechaventa, idproducto, idsucursal, tipopago, cantidad, precio');
-        if (error) throw error;
-
-        const { data: prods } = await db.from('productos').select('idproducto, nombreproducto');
-        const { data: sucs }  = await db.from('sucursales').select('idsucursal, nombresucursal');
-
-        productosMap = Object.fromEntries((prods || []).map(p => [p.idproducto, p.nombreproducto]));
-        sucursalesMap = Object.fromEntries((sucs  || []).map(s => [s.idsucursal, s.nombresucursal]));
-        datosCrudos = v;
-
-        // Extraer meses disponibles
-        const mesesSet = new Set();
-        v.forEach(r => {
-          const k = r.fechaventa?.slice(0, 7);
-          if (k) mesesSet.add(k);
+        if(key) return key;
+        key = keys.find(k => {
+            let lk = k.toLowerCase();
+            return targArr.some(t => lk.includes(t)) && (lk.includes('id') || lk.includes('cod') || lk.includes('rut'));
         });
-        mesesDisponibles = Array.from(mesesSet).sort();
+        if(key) return key;
+        return null;
+    };
 
-        // Mostrar secciones
-        document.getElementById('cred-section').style.display = 'none';
-        document.getElementById('month-section').classList.remove('hidden');
-        document.getElementById('metrics-section').classList.remove('hidden');
-        document.getElementById('charts-section').classList.remove('hidden');
-        document.getElementById('data-section').classList.remove('hidden');
-
-        // Generar botones de meses
-        generarBotonesMeses();
-
-        // Inicializar con "Todo"
-        mesSeleccionado = 'all';
-        paginaActual = 1;
-        document.getElementById('btn-all').classList.add('active');
-        actualizarDashboard();
-
-        // UI feedback
-        document.getElementById('badge').textContent = 'Conectado';
-        document.getElementById('badge').className = 'text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 border border-green-200';
-        document.getElementById('st').textContent = v.length.toLocaleString('es-CL') + ' registros cargados correctamente.';
-
-      } catch (e) {
-        const msg = e.message || JSON.stringify(e);
-        err.textContent = 'Error de conexión: ' + msg;
-        errBox.classList.remove('hidden');
-        document.getElementById('badge').textContent = 'Error';
-        document.getElementById('badge').className = 'text-xs px-3 py-1 rounded-full bg-red-100 text-red-700 border border-red-200';
-        document.getElementById('st').textContent = 'Revise las credenciales e intente nuevamente.';
-      }
+    // Universal matcher to find related data across tables regardless of exact key names
+    function getRelatedData(sourceRow, targetArray, fkTargets) {
+        if (!sourceRow || !targetArray || targetArray.length === 0) return null;
+        
+        let pkTarget = findPrimaryKey(targetArray[0]);
+        
+        // 1. Buscar llave foránea directa en la fila origen
+        let fkKey = findForeignKey(sourceRow, fkTargets);
+        if (fkKey) {
+            let fkVal = sourceRow[fkKey];
+            if (fkVal !== null && fkVal !== undefined && fkVal !== '') {
+                let match = targetArray.find(t => String(t[pkTarget]) === String(fkVal));
+                if (match) return match;
+                // Intentar coincidencia exacta con cualquier otra columna llamada 'id' o 'rut'
+                match = targetArray.find(t => {
+                    let tKeys = Object.keys(t);
+                    return tKeys.some(tk => (tk.toLowerCase().includes('id') || tk.toLowerCase().includes('rut') || tk.toLowerCase().includes('cod')) && String(t[tk]) === String(fkVal));
+                });
+                if (match) return match;
+            }
+        }
+        
+        // 2. Búsqueda de respaldo: iterar sobre los valores de la fila origen
+        // Solo lo hacemos si no encontramos por FK directa, para evitar falsos positivos
+        for (let sKey in sourceRow) {
+            let sVal = sourceRow[sKey];
+            if (sVal === null || sVal === undefined || sVal === '' || typeof sVal === 'boolean' || typeof sVal === 'object') continue;
+            
+            // Ignorar fechas y la PK de la tabla origen
+            if (sKey.toLowerCase().includes('fecha') || sKey.toLowerCase().includes('date') || sKey.toLowerCase().includes('_at')) continue;
+            if (sKey === pkTarget) continue; // Evitar cruzar con su propio ID
+            
+            let match = targetArray.find(t => {
+                // Comparar con la PK del destino
+                if (String(t[pkTarget]) === String(sVal)) return true;
+                // Comparar con otros posibles identificadores en el destino
+                let tKeys = Object.keys(t);
+                return tKeys.some(tk => (tk.toLowerCase().includes('id') || tk.toLowerCase().includes('rut') || tk.toLowerCase().includes('cod')) && String(t[tk]) === String(sVal));
+            });
+            
+            if (match) return match;
+        }
+        
+        return null;
     }
-  </script>
+    
+    function filterByDate(data) {
+        if ((!FILTER_START && !FILTER_END) || !data || data.length === 0) return data || [];
+        const dateKey = findDateKey(data[0]); if (!dateKey) return data;
+        return data.filter(row => { if (!row[dateKey]) return false; const rowDate = row[dateKey].toString().split('T')[0]; return (FILTER_START ? rowDate >= FILTER_START : true) && (FILTER_END ? rowDate <= FILTER_END : true); }).sort((a, b) => new Date(b[dateKey]) - new Date(a[dateKey]));
+    }
+    function applyFilter() { FILTER_START = document.getElementById('filter-start').value; FILTER_END = document.getElementById('filter-end').value; renderDashboard(); renderDistribuidoras(); renderVentasVendedor(); renderTablas(); document.getElementById('sync-status').innerHTML = `<span class="material-symbols-outlined" style="font-size: 14px;">sync</span> Actualizado: ${new Date().toLocaleTimeString('es-CL')}`; }
+    function clearFilter() { document.getElementById('filter-start').value = ''; document.getElementById('filter-end').value = ''; FILTER_START = ''; FILTER_END = ''; applyFilter(); }
 
+    async function fetchAllData() {
+        dataCache.ventas = await supabaseFetch('ventasdiarias', '?select=*&limit=5000');
+        dataCache.ventasVendedor = await supabaseFetch('ventasvendedero', '?select=*&limit=5000');
+        dataCache.productos = await supabaseFetch('productos', '?select=*&limit=5000');
+        dataCache.clientes = await supabaseFetch('clientes', '?select=*&limit=5000');
+        dataCache.vendedores = await supabaseFetch('vendedor', '?select=*&limit=5000');
+        dataCache.categorias = await supabaseFetch('tipoproducto', '?select=*&limit=5000');
+        dataCache.regiones = await supabaseFetch('region', '?select=*&limit=5000');
+        dataCache.ciudades = await supabaseFetch('ciudad', '?select=*&limit=5000');
+        dataCache.sucursales = await supabaseFetch('sucursales', '?select=*&limit=5000');
+        dataCache.proveedores = await supabaseFetch('proveedores', '?select=*&limit=5000');
+    }
+
+    const columnMap = {
+        id: 'ID', created_at: 'Fecha Creación', updated_at: 'Actualización',
+        sku: 'SKU', cod_prod: 'Cód. Producto', codigo: 'Código', nom_prod: 'Nombre Producto', nombre: 'Nombre', 
+        name: 'Nombre', descripcion: 'Descripción', precio: 'Precio', stock: 'Stock', cantidad: 'Cantidad',
+        id_tipoproducto: 'ID Categoría', id_proveedor: 'ID Proveedor', id_categoria: 'Categoría',
+        rut: 'RUT', dni: 'DNI', nom_cli: 'Nombre Cliente', fono: 'Teléfono', tel: 'Teléfono', 
+        telefono: 'Teléfono', dir: 'Dirección', direccion: 'Dirección', correo: 'Correo', email: 'Email',
+        fecha_venta: 'Fecha Venta', monto: 'Monto', total: 'Total', estado: 'Estado', status: 'Estado',
+        id_cliente: 'ID Cliente', id_vendedor: 'ID Vendedor', id_sucursal: 'ID Sucursal',
+        tipo: 'Tipo', hora: 'Hora', fecha: 'Fecha', activo: 'Activo',
+        vendedor: 'Vendedor', producto: 'Producto', tipo_producto: 'Tipo Producto'
+    };
+
+    function formatHeader(key) {
+        const lowerKey = key.toLowerCase();
+        if (columnMap[lowerKey]) return columnMap[lowerKey];
+        return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function renderDynamicTable(tableId, rawData) {
+        const table = document.getElementById(tableId);
+        if (!rawData || rawData.length === 0) { table.innerHTML = '<thead></thead><tbody><tr><td style="padding: 24px; text-align: center; color: var(--on-surface-variant);"><span class="material-symbols-outlined" style="font-size: 48px; display:block; margin-bottom:8px;">database_off</span>Sin datos para mostrar</td></tr></tbody>'; return; }
+        
+        let processedData = rawData.map(row => {
+            let newRow = {...row};
+            const dateKey = findDateKey(row);
+            if (dateKey && row[dateKey]) { 
+                const d = new Date(row[dateKey]); 
+                if (!isNaN(d.getTime())) { 
+                    let day = d.getDate().toString().padStart(2, '0');
+                    let month = (d.getMonth() + 1).toString().padStart(2, '0');
+                    let year = d.getFullYear();
+                    let hours = d.getHours().toString().padStart(2, '0');
+                    let mins = d.getMinutes().toString().padStart(2, '0');
+                    newRow[dateKey] = `${day}/${month}/${year} ${hours}:${mins}`;
+                } 
+            }
+            return newRow;
+        });
+
+        const headers = Object.keys(processedData[0]);
+        let html = '<thead><tr>';
+        headers.forEach(h => { html += `<th>${formatHeader(h)}</th>`; });
+        html += '</tr></thead><tbody>';
+        
+        processedData.forEach(row => {
+            html += '<tr>';
+            headers.forEach(h => {
+                let val = row[h] !== null && row[h] !== undefined ? row[h] : '-';
+                let align = 'left';
+                
+                if (h.toLowerCase().includes('rut') && val !== '-') {
+                    val = formatRUT(val);
+                }
+                
+                if (['precio', 'monto', 'total', 'valor'].some(k => h.toLowerCase().includes(k)) && !isNaN(val)) { 
+                    val = formatCLP(val); 
+                    align = 'right';
+                }
+                else if (typeof row[h] === 'number' && !h.toLowerCase().includes('id')) {
+                    val = new Intl.NumberFormat('es-CL').format(val);
+                    align = 'right';
+                }
+                
+                if (['estado', 'status'].some(k => h.toLowerCase().includes(k))) {
+                    const v = String(val).toLowerCase();
+                    if (v.includes('enviado') || v.includes('activo') || v.includes('completado')) { val = `<span class="badge badge-success">${val}</span>`; }
+                    else if (v.includes('pendiente') || v.includes('proceso')) { val = `<span class="badge badge-warning">${val}</span>`; }
+                    else if (v.includes('cancelado') || v.includes('fallido')) { val = `<span class="badge badge-danger">${val}</span>`; }
+                    else { val = `<span class="badge badge-info">${val}</span>`; }
+                    align = 'center';
+                }
+                html += `<td style="text-align: ${align};">${val}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += `</tbody><tfoot><tr><td colspan="${headers.length}" class="table-footer">Mostrando ${processedData.length} registros</td></tr></tfoot>`;
+        table.innerHTML = html;
+    }
+
+    // =======================================================================
+    // RENDERIZADO DE SECCIONES
+    // =======================================================================
+
+    function renderDashboard() {
+        let filteredVentas = filterByDate(dataCache.ventas); 
+        let totalSales = 0, totalUnits = 0;
+        
+        if (filteredVentas.length > 0) { 
+            totalUnits = filteredVentas.length; 
+            const numKey = findNumKey(filteredVentas[0]); 
+            if (numKey) { filteredVentas.forEach(v => totalSales += parseFloat(v[numKey] || 0)); } 
+        }
+        
+        document.getElementById('m-sales').innerText = formatCLP(totalSales);
+        document.getElementById('m-units').innerText = totalUnits.toLocaleString('es-CL');
+        
+        let topProduct = "N/A";
+        if(filteredVentas.length > 0 && dataCache.productos) {
+            let counts = {};
+            filteredVentas.forEach(v => {
+                let prod = getRelatedData(v, dataCache.productos, ['producto', 'prod']);
+                let prodId = prod ? prod[findPrimaryKey(prod)] : (v[findForeignKey(v, ['producto', 'prod'])] || null);
+                if(prodId !== null) counts[prodId] = (counts[prodId] || 0) + 1;
+            });
+            if(Object.keys(counts).length > 0) {
+                let topId = Object.keys(counts).sort((a,b) => counts[b]-counts[a])[0];
+                let prod = dataCache.productos.find(p => String(p[findPrimaryKey(p)]) === String(topId));
+                if(prod) topProduct = prod[findTextKey(prod)] || `ID ${topId}`;
+            }
+        }
+        document.getElementById('m-top-product').innerText = topProduct;
+
+        renderDashboardCharts(filteredVentas);
+    }
+
+    function renderDistribuidoras() {
+        const tooltipOpts = {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+                title: (context) => context[0].label,
+                label: (context) => `${context.dataset.label || 'Valor'}: ${context.formattedValue}`
+            }
+        };
+        const chartOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltipOpts } };
+        const colors = ['#0058be', '#4648d4', '#6b38d4', '#d3e4fe', '#f97316', '#10b981', '#f59e0b', '#ef4444'];
+
+        let sucursalData = getGroupedSalesData('sucursal');
+        destroyChart('sucursal'); 
+        chartInstances.sucursal = new Chart(document.getElementById('chart-sucursal').getContext('2d'), { 
+            type: 'doughnut', data: { labels: sucursalData.labels, datasets: [{ label: 'Ventas', data: sucursalData.values, backgroundColor: colors }] }, 
+            options: { ...chartOpts, cutout: '60%' } 
+        });
+
+        let provData = getProveedoresData();
+        destroyChart('proveedor'); 
+        chartInstances.proveedor = new Chart(document.getElementById('chart-proveedor').getContext('2d'), { 
+            type: 'doughnut', data: { labels: provData.labels, datasets: [{ label: 'Productos', data: provData.values, backgroundColor: colors }] }, 
+            options: { ...chartOpts, cutout: '60%' } 
+        });
+
+        renderDynamicTable('table-ciudad', dataCache.ciudades);
+    }
+
+    function renderVentasVendedor() {
+        let rawVentas = dataCache.ventasVendedor && dataCache.ventasVendedor.length > 0 ? dataCache.ventasVendedor : dataCache.ventas;
+        let ventas = filterByDate(rawVentas);
+        let tableData = [];
+        
+        let searchTerm = (document.getElementById('search-vendedor')?.value || '').toLowerCase();
+        let sortDir = document.getElementById('sort-vendedor')?.value || 'desc';
+        
+        if(ventas.length > 0) {
+            let dateKey = findDateKey(ventas[0]);
+            if(dateKey) {
+                ventas.sort((a, b) => {
+                    let da = a[dateKey] ? new Date(a[dateKey]) : new Date(0);
+                    let db = b[dateKey] ? new Date(b[dateKey]) : new Date(0);
+                    return sortDir === 'asc' ? da - db : db - da;
+                });
+            }
+            
+            ventas.forEach(v => {
+                let row = {};
+                let dateKey = findDateKey(v);
+                row['fecha_venta'] = dateKey && v[dateKey] ? new Date(v[dateKey]).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                
+                let vendedor = getRelatedData(v, dataCache.vendedores, ['vendedor', 'vend']);
+                let vendedorName = vendedor ? getDisplayName(vendedor) : 'Sin Vendedor';
+                
+                if(searchTerm && !String(vendedorName).toLowerCase().includes(searchTerm)) return;
+                row['vendedor'] = vendedorName;
+                
+                let producto = getRelatedData(v, dataCache.productos, ['producto', 'prod']);
+                row['producto'] = producto ? (producto[findTextKey(producto)] || 'Sin Nombre') : 'Sin Producto';
+                
+                let tipoName = 'Sin Tipo';
+                if(producto) {
+                    let tipo = getRelatedData(producto, dataCache.categorias, ['tipoproducto', 'tipo', 'categoria', 'categ']);
+                    if(tipo) {
+                        tipoName = tipo[findTextKey(tipo)] || 'Sin Nombre';
+                    } else {
+                        let directTipoKey = Object.keys(producto).find(k => k.toLowerCase().includes('tipo') || k.toLowerCase().includes('categ'));
+                        if(directTipoKey && producto[directTipoKey]) tipoName = producto[directTipoKey];
+                    }
+                }
+                row['tipo_producto'] = tipoName;
+                
+                let montoKey = findNumKey(v);
+                row['monto'] = montoKey ? v[montoKey] : 0;
+                
+                tableData.push(row);
+            });
+        }
+        renderDynamicTable('table-ventas-vendedor', tableData);
+    }
+
+    function renderTablas() {
+        let searchTerm = (document.getElementById('search-tablas')?.value || '').toLowerCase();
+        let sortDir = document.getElementById('sort-tablas')?.value || 'desc';
+        
+        let clientesFiltrados = applyTableFilters(dataCache.clientes, searchTerm, sortDir);
+        renderDynamicTable('table-clientes-data', clientesFiltrados);
+        
+        let productosFiltrados = applyTableFilters(dataCache.productos, searchTerm, sortDir);
+        renderDynamicTable('table-productos-data', productosFiltrados);
+        
+        let vendedoresFiltrados = applyTableFilters(dataCache.vendedores, searchTerm, sortDir);
+        renderDynamicTable('table-vendedores-data', vendedoresFiltrados);
+
+        renderTablasCharts();
+    }
+
+    function applyTableFilters(data, searchTerm, sortDir) {
+        if(!data || data.length === 0) return [];
+        let filtered = data.filter(row => {
+            if(!searchTerm) return true;
+            return Object.values(row).some(val => String(val).toLowerCase().includes(searchTerm));
+        });
+
+        let dateKey = findDateKey(filtered[0] || {});
+        let textKey = findTextKey(filtered[0] || {});
+
+        if(sortDir === 'az' || sortDir === 'za') {
+            if(textKey) {
+                filtered.sort((a, b) => {
+                    let va = a[textKey] || '';
+                    let vb = b[textKey] || '';
+                    return sortDir === 'az' ? va.localeCompare(vb, 'es') : vb.localeCompare(va, 'es');
+                });
+            }
+        } else {
+            if(dateKey) {
+                filtered.sort((a, b) => {
+                    let da = a[dateKey] ? new Date(a[dateKey]) : new Date(0);
+                    let db = b[dateKey] ? new Date(b[dateKey]) : new Date(0);
+                    return sortDir === 'asc' ? da - db : db - da;
+                });
+            }
+        }
+        return filtered;
+    }
+
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+        document.getElementById(tabId).style.display = 'block';
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // =======================================================================
+    // HELPERS DE GRÁFICOS
+    // =======================================================================
+    function destroyChart(name) { if(chartInstances[name]) chartInstances[name].destroy(); }
+
+    function getCategoryChartData() {
+        if (dataCache.productos && dataCache.productos.length > 0 && dataCache.categorias && dataCache.categorias.length > 0) {
+            let stockKey = Object.keys(dataCache.productos[0]).find(k => k.toLowerCase().includes('stock') || k.toLowerCase().includes('cantidad'));
+            let grouped = {};
+            dataCache.productos.forEach(p => {
+                let cat = getRelatedData(p, dataCache.categorias, ['tipoproducto', 'tipo', 'categoria', 'categ']);
+                let name = cat ? (cat[findTextKey(cat)] || 'Sin Nombre') : 'Sin Categoría';
+                if (!grouped[name]) grouped[name] = 0;
+                grouped[name] += stockKey ? (Number(p[stockKey]) || 0) : 1;
+            });
+            if(Object.keys(grouped).length > 0) return { labels: Object.keys(grouped), values: Object.values(grouped) };
+        }
+        if (dataCache.categorias && dataCache.categorias.length > 0) {
+            const nameKey = findTextKey(dataCache.categorias[0]) || Object.keys(dataCache.categorias[0])[1];
+            return { labels: dataCache.categorias.map(c => c[nameKey] || 'N/A'), values: dataCache.categorias.map(() => 1) };
+        }
+        return { labels: ['Sin Datos'], values: [1] };
+    }
+
+    function getTopProductsData() {
+        if(!dataCache.ventas || dataCache.ventas.length === 0 || !dataCache.productos) return { labels: ['Sin Datos'], values: [1] };
+        
+        let counts = {};
+        dataCache.ventas.forEach(v => {
+            let prod = getRelatedData(v, dataCache.productos, ['producto', 'prod']);
+            let prodId = prod ? prod[findPrimaryKey(prod)] : null;
+            if(prodId !== null) counts[prodId] = (counts[prodId] || 0) + 1;
+        });
+        
+        let sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
+        let labels = []; let values = [];
+        sorted.forEach(id => {
+            let prod = dataCache.productos.find(p => String(p[findPrimaryKey(p)]) === String(id));
+            labels.push(prod ? (prod[findTextKey(prod)] || `Prod ${id}`) : `Prod ${id}`);
+            values.push(counts[id]);
+        });
+        return labels.length > 0 ? { labels, values } : { labels: ['Sin Datos'], values: [1] };
+    }
+
+    function getGroupedSalesData(level) {
+        let ventas = filterByDate(dataCache.ventas);
+        if(ventas.length === 0) return { labels: ['Sin Datos'], values: [1] };
+        
+        let grouped = {};
+        ventas.forEach(v => {
+            let name = `Sin ${level.charAt(0).toUpperCase() + level.slice(1)}`;
+            let numKey = findNumKey(v);
+            let val = numKey ? (Number(v[numKey]) || 0) : 1;
+            
+            let sucursal = getRelatedData(v, dataCache.sucursales, ['sucursal', 'suc']);
+            let ciudad = sucursal ? getRelatedData(sucursal, dataCache.ciudades, ['ciudad', 'ciu']) : getRelatedData(v, dataCache.ciudades, ['ciudad', 'ciu']);
+            let region = ciudad ? getRelatedData(ciudad, dataCache.regiones, ['region', 'reg']) : getRelatedData(v, dataCache.regiones, ['region', 'reg']);
+            
+            if (level === 'region' && region) name = region[findTextKey(region)] || 'Sin Nombre';
+            else if (level === 'ciudad' && ciudad) name = ciudad[findTextKey(ciudad)] || 'Sin Nombre';
+            else if (level === 'sucursal' && sucursal) name = sucursal[findTextKey(sucursal)] || 'Sin Nombre';
+            
+            grouped[name] = (grouped[name] || 0) + val;
+        });
+        return Object.keys(grouped).length > 0 ? { labels: Object.keys(grouped), values: Object.values(grouped) } : { labels: ['Sin Datos'], values: [1] };
+    }
+
+    function getProveedoresData() {
+        if(!dataCache.productos || dataCache.productos.length === 0) return { labels: ['Sin Datos'], values: [1] };
+        let grouped = {};
+        dataCache.productos.forEach(p => {
+            let prov = getRelatedData(p, dataCache.proveedores, ['proveedor', 'prov']);
+            let name = prov ? (prov[findTextKey(prov)] || 'Sin Nombre') : 'Sin Proveedor';
+            grouped[name] = (grouped[name] || 0) + 1;
+        });
+        return Object.keys(grouped).length > 0 ? { labels: Object.keys(grouped), values: Object.values(grouped) } : { labels: ['Sin Datos'], values: [1] };
+    }
+
+    function getVendedoresTopData() {
+        let ventas = filterByDate(dataCache.ventasVendedor && dataCache.ventasVendedor.length > 0 ? dataCache.ventasVendedor : dataCache.ventas);
+        if(ventas.length === 0 || !dataCache.vendedores) return { labels: ['Sin Datos'], values: [1] };
+        
+        let grouped = {};
+        ventas.forEach(v => {
+            let vend = getRelatedData(v, dataCache.vendedores, ['vendedor', 'vend']);
+            let vendId = vend ? vend[findPrimaryKey(vend)] : null;
+            if(vendId !== null) grouped[vendId] = (grouped[vendId] || 0) + 1;
+        });
+        
+        let sorted = Object.keys(grouped).sort((a,b) => grouped[b] - grouped[a]).slice(0, 5);
+        let labels = []; let values = [];
+        sorted.forEach(id => {
+            let vend = dataCache.vendedores.find(v => String(v[findPrimaryKey(v)]) === String(id));
+            labels.push(vend ? getDisplayName(vend) : `Vend ${id}`);
+            values.push(grouped[id]);
+        });
+        return labels.length > 0 ? { labels, values } : { labels: ['Sin Datos'], values: [1] };
+    }
+
+    function renderDashboardCharts(ventasData) {
+        const tooltipOpts = {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+                title: (context) => context[0].label,
+                label: (context) => `${context.dataset.label || 'Valor'}: ${context.formattedValue}`
+            }
+        };
+        const chartOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltipOpts } };
+        const catData = getCategoryChartData();
+        const topProdData = getTopProductsData();
+        
+        destroyChart('line'); const lineCtx = document.getElementById('chart-line').getContext('2d');
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const monthlyTotals = new Array(12).fill(0);
+        const numKey = ventasData && ventasData.length > 0 ? findNumKey(ventasData[0]) : null;
+        const dateKey = ventasData && ventasData.length > 0 ? findDateKey(ventasData[0]) : null;
+        if(numKey && dateKey) { ventasData.forEach(v => { if(v[dateKey]) { monthlyTotals[new Date(v[dateKey]).getMonth()] += parseFloat(v[numKey] || 0); } }); }
+        chartInstances.line = new Chart(lineCtx, { type: 'line', data: { labels: months, datasets: [{ label: 'Ventas CLP', data: monthlyTotals, borderColor: '#0058be', backgroundColor: 'rgba(0,88,190,0.1)', fill: true, tension: 0.4 }] }, options: { ...chartOpts, scales: { y: { beginAtZero: true, ticks: { callback: (val) => '$' + (val/1000000).toFixed(1) + 'M' } } } } });
+
+        destroyChart('doughnut'); const doughnutCtx = document.getElementById('chart-doughnut').getContext('2d');
+        chartInstances.doughnut = new Chart(doughnutCtx, { type: 'doughnut', data: { labels: catData.labels, datasets: [{ label: 'Inventario', data: catData.values, backgroundColor: ['#0058be', '#4648d4', '#6b38d4', '#d3e4fe', '#f97316', '#10b981'] }] }, options: { ...chartOpts, cutout: '65%' } });
+
+        let vLabels = []; let vValues = [];
+        let vendData = getVendedoresTopData();
+        vLabels = vendData.labels; vValues = vendData.values;
+        destroyChart('vendedor'); const vendedorCtx = document.getElementById('chart-vendedor').getContext('2d');
+        chartInstances.vendedor = new Chart(vendedorCtx, { type: 'bar', data: { labels: vLabels, datasets: [{ label: 'Ventas', data: vValues, backgroundColor: '#0058be', borderRadius: 4 }] }, options: { ...chartOpts, indexAxis: 'y', scales: { x: { beginAtZero: true } } } });
+
+        destroyChart('topProducts'); const topProdCtx = document.getElementById('chart-top-products').getContext('2d');
+        chartInstances.topProducts = new Chart(topProdCtx, { type: 'bar', data: { labels: topProdData.labels, datasets: [{ label: 'Unidades Vendidas', data: topProdData.values, backgroundColor: '#4648d4', borderRadius: 4 }] }, options: { ...chartOpts, scales: { y: { beginAtZero: true } } } });
+    }
+
+    function renderTablasCharts() {
+        const tooltipOpts = {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+                title: (context) => context[0].label,
+                label: (context) => `${context.dataset.label || 'Valor'}: ${context.formattedValue}`
+            }
+        };
+        const chartOpts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: tooltipOpts } };
+        const colors = ['#0058be', '#4648d4', '#6b38d4', '#d3e4fe', '#f97316', '#10b981', '#f59e0b', '#ef4444'];
+
+        // 1. Productos por Categoría (Línea)
+        destroyChart('prodTipoLine'); 
+        let prodData = getCategoryChartData();
+        chartInstances.prodTipoLine = new Chart(document.getElementById('chart-prod-tipo-line').getContext('2d'), { 
+            type: 'line', 
+            data: { labels: prodData.labels, datasets: [{ label: 'Cantidad de Productos', data: prodData.values, borderColor: '#0058be', backgroundColor: 'rgba(0,88,190,0.1)', fill: true, tension: 0.4 }] }, 
+            options: { ...chartOpts, scales: { y: { beginAtZero: true } } } 
+        });
+
+        // 2. Ventas por Región
+        destroyChart('region'); 
+        let regionData = getGroupedSalesData('region');
+        chartInstances.region = new Chart(document.getElementById('chart-region').getContext('2d'), { 
+            type: 'bar', data: { labels: regionData.labels, datasets: [{ label: 'Ventas', data: regionData.values, backgroundColor: colors, borderRadius: 4 }] }, 
+            options: { ...chartOpts, scales: { y: { beginAtZero: true } } } 
+        });
+
+        // 3. Ventas por Ciudad
+        destroyChart('ciudad'); 
+        let ciudadData = getGroupedSalesData('ciudad');
+        chartInstances.ciudad = new Chart(document.getElementById('chart-ciudad').getContext('2d'), { 
+            type: 'bar', data: { labels: ciudadData.labels, datasets: [{ label: 'Ventas', data: ciudadData.values, backgroundColor: colors, borderRadius: 4 }] }, 
+            options: { ...chartOpts, scales: { y: { beginAtZero: true } } } 
+        });
+    }
+
+    document.getElementById('download-xlsm-btn').addEventListener('click', function() {
+        const csvContent = "data:text/csv;charset=utf-8,ID,Producto,Cantidad,Precio\n1,Laptop HP,5,1200000\n2,Mouse,20,45000";
+        const encodedUri = encodeURI(csvContent); const link = document.createElement('a');
+        link.href = encodedUri; link.download = 'Reporte_CompStore.xlsm';
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    });
+</script>
 </body>
 </html>
